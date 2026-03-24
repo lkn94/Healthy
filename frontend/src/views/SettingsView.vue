@@ -30,6 +30,27 @@
       </div>
     </div>
 
+    <div class="rounded-3xl border border-white/10 bg-white/5 p-6">
+      <h2 class="text-2xl font-display">Privatsphäre & Bestenliste</h2>
+      <p class="text-white/60">Bestimme, ob dein Name in der Bestenliste erscheint.</p>
+      <div class="mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p class="text-white/80 text-sm">
+            {{ showOnLeaderboard ? 'Du bist aktuell sichtbar.' : 'Du bist aktuell verborgen.' }}
+          </p>
+          <p class="text-white/50 text-xs">Nur dein Anzeigename und die Schrittwerte werden gezeigt.</p>
+        </div>
+        <button
+          class="rounded-2xl px-4 py-2 text-sm font-semibold border"
+          :class="showOnLeaderboard ? 'border-pulse text-white' : 'border-white/30 text-white/70'"
+          :disabled="settingsLoading"
+          @click="toggleLeaderboardVisibility"
+        >
+          {{ showOnLeaderboard ? 'Verbergen' : 'Sichtbar werden' }}
+        </button>
+      </div>
+    </div>
+
     <div v-if="selectedConnection" class="rounded-3xl border border-white/10 bg-white/5 p-6">
       <h2 class="text-2xl font-display">Sensor-Zuordnung – {{ selectedConnection.name }}</h2>
       <p class="text-white/60">Wähle passende Sensoren für Schritte, Gewicht, Distanz und aktive Minuten.</p>
@@ -99,10 +120,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, reactive, ref, watch, onMounted } from 'vue';
 import { useConnectionsStore, type HaEntity } from '../stores/connections';
+import { useAuthStore } from '../stores/auth';
 
 const store = useConnectionsStore();
+const authStore = useAuthStore();
 const connectionForm = reactive({ name: '', baseUrl: '', accessToken: '' });
 
 const mapping = reactive({
@@ -118,6 +141,7 @@ const entityOptions = ref<HaEntity[]>([]);
 const entitySearch = ref('');
 const importDate = ref<string>('');
 const syncInfo = ref<any>(null);
+const settingsLoading = ref(false);
 
 const connections = computed(() => store.connections);
 const selectedConnection = computed(() => connections.value.find((c) => c.id === selectedConnectionId.value) ?? null);
@@ -166,6 +190,9 @@ const handleImport = async () => {
 };
 
 store.fetchConnections();
+onMounted(() => {
+  authStore.fetchSettings();
+});
 
 const removeConnection = async (id: string) => {
   await store.deleteConnection(id);
@@ -191,6 +218,17 @@ const filteredEntities = computed(() => {
     return label.includes(term);
   });
 });
+
+const showOnLeaderboard = computed(() => authStore.settings?.showOnLeaderboard ?? true);
+
+const toggleLeaderboardVisibility = async () => {
+  settingsLoading.value = true;
+  try {
+    await authStore.updateSettings({ showOnLeaderboard: !showOnLeaderboard.value });
+  } finally {
+    settingsLoading.value = false;
+  }
+};
 </script>
 
 <style scoped>

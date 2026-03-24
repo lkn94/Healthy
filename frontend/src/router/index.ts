@@ -9,6 +9,7 @@ import SettingsView from '../views/SettingsView.vue';
 import ChallengesView from '../views/ChallengesView.vue';
 import CaloriesView from '../views/CaloriesView.vue';
 import CollectionsView from '../views/CollectionsView.vue';
+import LeaderboardView from '../views/LeaderboardView.vue';
 import AuthView from '../views/AuthView.vue';
 
 const routes: RouteRecordRaw[] = [
@@ -36,6 +37,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'calories', name: 'calories', component: CaloriesView },
       { path: 'collections', name: 'collections', component: CollectionsView },
       { path: 'challenges', name: 'challenges', component: ChallengesView },
+      { path: 'leaderboard', name: 'leaderboard', component: LeaderboardView },
       { path: 'body', name: 'body', component: BodyView },
       { path: 'settings', name: 'settings', component: SettingsView }
     ]

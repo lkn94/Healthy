@@ -132,3 +132,14 @@ export interface CollectionModuleDTO {
     ai: number;
   };
 }
+
+export interface UserSettingsDTO {
+  showOnLeaderboard: boolean;
+}
+
+export interface LeaderboardEntryDTO {
+  rank: number;
+  displayName: string;
+  stepsToday: number;
+  totalSteps: number;
+}

@@ -8,6 +8,7 @@ interface AuthState {
   loading: boolean;
   error: string | null;
   initialized: boolean;
+  settings: { showOnLeaderboard: boolean } | null;
 }
 
 export const useAuthStore = defineStore('auth', {
@@ -16,7 +17,8 @@ export const useAuthStore = defineStore('auth', {
     user: null,
     loading: false,
     error: null,
-    initialized: false
+    initialized: false,
+    settings: null
   }),
   getters: {
     isAuthenticated: (state) => Boolean(state.token)
@@ -37,6 +39,14 @@ export const useAuthStore = defineStore('auth', {
       } catch (error) {
         this.logout();
       }
+    },
+    async fetchSettings() {
+      const { data } = await api.get<{ showOnLeaderboard: boolean }>('/user/settings');
+      this.settings = { showOnLeaderboard: data.showOnLeaderboard };
+    },
+    async updateSettings(payload: { showOnLeaderboard: boolean }) {
+      const { data } = await api.patch<{ showOnLeaderboard: boolean }>('/user/settings', payload);
+      this.settings = { showOnLeaderboard: data.showOnLeaderboard };
     },
     async login(payload: { email: string; password: string }) {
       this.loading = true;
@@ -72,6 +82,7 @@ export const useAuthStore = defineStore('auth', {
       this.token = null;
       this.user = null;
       localStorage.removeItem('hd_token');
+      this.settings = null;
     }
   }
 });
