@@ -189,6 +189,8 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     });
 
     const adaptiveGoal = computeAdaptiveGoal(days);
+    const todayCalories = todayEntry?.calories ?? 0;
+    const latestWeightEntry = [...days].reverse().find((day) => typeof day.weight === 'number');
 
     return {
       today: {
@@ -199,7 +201,14 @@ export default async function dashboardRoutes(app: FastifyInstance) {
       },
       weekly: weekDays,
       lifetime: stats,
-      dailyTarget: adaptiveGoal
+      dailyTarget: adaptiveGoal,
+      insights: {
+        todayCalories,
+        weight: latestWeightEntry?.weight ?? null,
+        weightDate: latestWeightEntry
+          ? formatISO(latestWeightEntry.date, { representation: 'date' })
+          : null
+      }
     };
   });
 

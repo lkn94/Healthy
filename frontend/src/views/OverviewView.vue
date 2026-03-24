@@ -65,6 +65,27 @@
         </p>
       </div>
     </div>
+
+    <div class="grid gap-6 md:grid-cols-2">
+      <div class="rounded-3xl border border-white/10 bg-white/5 p-6">
+        <p class="text-xs uppercase tracking-[0.4em] text-white/60">Kalorien heute</p>
+        <p class="mt-4 text-4xl font-display text-white">
+          {{ insights?.todayCalories?.toLocaleString('de-DE') ?? '0' }} kcal
+        </p>
+        <p class="mt-2 text-sm text-white/60">
+          Direkt aus deinem Kaloriensensor – volle Details im Kalorien-Tab.
+        </p>
+      </div>
+      <div class="rounded-3xl border border-white/10 bg-white/5 p-6">
+        <p class="text-xs uppercase tracking-[0.4em] text-white/60">Aktuelles Gewicht</p>
+        <p class="mt-4 text-4xl font-display text-white">
+          {{ weightDisplay }}
+        </p>
+        <p class="mt-2 text-sm text-white/60">
+          Zuletzt gemessen: {{ weightDateLabel }}
+        </p>
+      </div>
+    </div>
   </section>
 </template>
 
@@ -82,6 +103,7 @@ onMounted(() => {
 
 const overview = computed(() => dashboard.overview);
 const dailyTarget = computed(() => overview.value?.dailyTarget);
+const insights = computed(() => overview.value?.insights);
 
 const weeklyChart = computed(() => ({
   grid: { left: 10, right: 10, top: 30, bottom: 0, containLabel: true },
@@ -130,5 +152,16 @@ const targetProgress = computed(() => {
   const { target } = overview.value.dailyTarget;
   if (!target) return 0;
   return Math.min(100, Math.round((steps / target) * 100));
+});
+
+const weightDisplay = computed(() => {
+  const weight = insights.value?.weight;
+  if (!weight) return '–';
+  return `${weight.toFixed(1)} kg`;
+});
+
+const weightDateLabel = computed(() => {
+  const label = insights.value?.weightDate;
+  return label ?? 'Keine Messung';
 });
 </script>

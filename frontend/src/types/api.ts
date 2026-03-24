@@ -48,6 +48,11 @@ export interface OverviewResponse {
     achievedDays: number;
     message: string;
   };
+  insights: {
+    todayCalories: number;
+    weight: number | null;
+    weightDate: string | null;
+  };
 }
 
 export interface ProgressResponse {
