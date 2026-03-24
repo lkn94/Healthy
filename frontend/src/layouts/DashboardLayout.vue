@@ -1,7 +1,21 @@
 <template>
-  <div class="min-h-screen bg-midnight text-white flex">
+  <div class="min-h-screen bg-midnight text-white flex flex-col lg:flex-row">
+    <div class="lg:hidden border-b border-white/10 bg-gradient-to-r from-eclipse to-midnight p-4 flex items-center justify-between">
+      <div>
+        <p class="text-xs uppercase tracking-[0.4em] text-white/50">Health</p>
+        <p class="text-xl font-display font-semibold">Dashboard</p>
+      </div>
+      <button
+        class="h-10 w-10 rounded-2xl border border-white/20 flex items-center justify-center"
+        @click="toggleMobileMenu"
+      >
+        <span v-if="!mobileMenuOpen">☰</span>
+        <span v-else>×</span>
+      </button>
+    </div>
     <aside
-      class="hidden lg:flex w-72 flex-col border-r border-white/5 bg-gradient-to-b from-eclipse/60 to-midnight/80 backdrop-blur-xl"
+      class="lg:flex w-72 flex-col border-r border-white/5 bg-gradient-to-b from-eclipse/60 to-midnight/80 backdrop-blur-xl"
+      :class="mobileMenuOpen ? 'block' : 'hidden lg:flex'"
     >
       <div class="px-8 py-10">
         <div class="flex items-center gap-3">
@@ -83,7 +97,7 @@
 
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { useConnectionsStore } from '../stores/connections';
 import { ChartBarIcon, SparklesIcon, ClockIcon, Cog6ToothIcon, HeartIcon, FlagIcon, FireIcon, BuildingOfficeIcon, TrophyIcon } from '@heroicons/vue/24/outline';
@@ -91,6 +105,7 @@ import { ChartBarIcon, SparklesIcon, ClockIcon, Cog6ToothIcon, HeartIcon, FlagIc
 const route = useRoute();
 const auth = useAuthStore();
 const connections = useConnectionsStore();
+const mobileMenuOpen = ref(false);
 
 const streakLabel = computed(() => `${connections.lifetimeStats.longestStreak ?? 0} Tage`);
 const connectionCount = computed(() => connections.connections.length);
@@ -121,6 +136,10 @@ const navItems = [
 
 const handleLogout = () => {
   auth.logout();
+};
+
+const toggleMobileMenu = () => {
+  mobileMenuOpen.value = !mobileMenuOpen.value;
 };
 
 if (!connections.loaded) {
