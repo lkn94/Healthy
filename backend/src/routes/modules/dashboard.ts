@@ -10,6 +10,7 @@ import {
   subDays
 } from 'date-fns';
 import { env } from '../../env';
+import type { CollectionModule } from '@prisma/client';
 
 interface AggregatedDay {
   date: Date;
@@ -163,6 +164,54 @@ export default async function dashboardRoutes(app: FastifyInstance) {
       },
       { totalSteps: 0, totalKm: 0, bestDaySteps: 0, bestWeekSteps: 0, longestStreak: 0, daysTracked: 0 }
     );
+  };
+
+  const dailyChallengeCount = async (userId: string) => {
+    const today = startOfDay(new Date());
+    const total = await app.prisma.dailyChallengeProgress.count({ where: { userId } });
+    const todayCount = await app.prisma.dailyChallengeProgress.count({ where: { userId, date: today } });
+    return { total, todayCount };
+  };
+
+  const loadCollections = async (userId: string) => {
+    const stats = await loadLifetimeStats(userId);
+    const { total, todayCount } = await dailyChallengeCount(userId);
+
+    const modules = await app.prisma.collectionModule.findMany({ orderBy: { orderIndex: 'asc' } });
+
+    const energyPoints = stats.totalSteps;
+    const automationPoints = todayCount;
+    const aiPoints = Math.floor(total / 5);
+
+    const inventory = modules.map((module) => {
+      const unlocked =
+        energyPoints >= module.requiredEnergy &&
+        automationPoints >= module.requiredAutomation &&
+        aiPoints >= module.requiredAI;
+      const progress = {
+        energy: Math.min(1, energyPoints / module.requiredEnergy),
+        automation: Math.min(1, module.requiredAutomation ? automationPoints / module.requiredAutomation : 1),
+        ai: Math.min(1, module.requiredAI ? aiPoints / module.requiredAI : 1)
+      };
+      return {
+        id: module.id,
+        key: module.key,
+        title: module.title,
+        description: module.description,
+        requiredEnergy: module.requiredEnergy,
+        requiredAutomation: module.requiredAutomation,
+        requiredAI: module.requiredAI,
+        unlocked,
+        progress
+      };
+    });
+
+    return {
+      energyPoints,
+      automationPoints,
+      aiPoints,
+      inventory
+    };
   };
 
   app.get('/overview', { preHandler: [app.authenticate] }, async (request) => {
@@ -437,5 +486,11 @@ const dailyChallengeLevels = [
     });
 
     return { daily };
+  });
+
+  app.get('/collections', { preHandler: [app.authenticate] }, async (request) => {
+    const userId = getUserId(request);
+    const collections = await loadCollections(userId);
+    return collections;
   });
 }

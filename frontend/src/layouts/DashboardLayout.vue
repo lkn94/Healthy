@@ -86,7 +86,7 @@ import { useRoute } from 'vue-router';
 import { computed } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { useConnectionsStore } from '../stores/connections';
-import { ChartBarIcon, SparklesIcon, ClockIcon, Cog6ToothIcon, HeartIcon, FlagIcon, FireIcon } from '@heroicons/vue/24/outline';
+import { ChartBarIcon, SparklesIcon, ClockIcon, Cog6ToothIcon, HeartIcon, FlagIcon, FireIcon, BuildingOfficeIcon } from '@heroicons/vue/24/outline';
 
 const route = useRoute();
 const auth = useAuthStore();
@@ -112,6 +112,7 @@ const navItems = [
   { name: 'progress', label: 'Fortschritt', to: '/progress', icon: ChartBarIcon },
   { name: 'lifetime', label: 'Lebensleistung', to: '/lifetime', icon: ClockIcon },
   { name: 'calories', label: 'Kalorien', to: '/calories', icon: FireIcon },
+  { name: 'collections', label: 'Collections', to: '/collections', icon: BuildingOfficeIcon },
   { name: 'challenges', label: 'Herausforderungen', to: '/challenges', icon: FlagIcon },
   { name: 'body', label: 'Körper & Regeneration', to: '/body', icon: HeartIcon, badge: 'Live' },
   { name: 'settings', label: 'Einstellungen', to: '/settings', icon: Cog6ToothIcon }

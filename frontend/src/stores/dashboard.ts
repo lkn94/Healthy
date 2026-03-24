@@ -1,6 +1,12 @@
 import { defineStore } from 'pinia';
 import api from '../services/http';
-import type { BodyResponse, OverviewResponse, ProgressResponse, CaloriesResponse } from '../types/api';
+import type {
+  BodyResponse,
+  OverviewResponse,
+  ProgressResponse,
+  CaloriesResponse,
+  CollectionResponse
+} from '../types/api';
 
 export const useDashboardStore = defineStore('dashboard', {
   state: () => ({
@@ -8,6 +14,7 @@ export const useDashboardStore = defineStore('dashboard', {
     progress: null as ProgressResponse | null,
     body: null as BodyResponse | null,
     calories: null as CaloriesResponse | null,
+    collections: null as CollectionResponse | null,
     loading: false
   }),
   actions: {
@@ -31,6 +38,10 @@ export const useDashboardStore = defineStore('dashboard', {
     async loadCalories() {
       const { data } = await api.get<CaloriesResponse>('/dashboard/calories');
       this.calories = data;
+    },
+    async loadCollections() {
+      const { data } = await api.get<CollectionResponse>('/dashboard/collections');
+      this.collections = data;
     }
   }
 });

@@ -107,3 +107,26 @@ export interface DailyChallengeDTO {
   currentValue: number;
   completed: boolean;
 }
+
+export interface CollectionResponse {
+  energyPoints: number;
+  automationPoints: number;
+  aiPoints: number;
+  inventory: CollectionModuleDTO[];
+}
+
+export interface CollectionModuleDTO {
+  id: string;
+  key: string;
+  title: string;
+  description: string;
+  requiredEnergy: number;
+  requiredAutomation: number;
+  requiredAI: number;
+  unlocked: boolean;
+  progress: {
+    energy: number;
+    automation: number;
+    ai: number;
+  };
+}
