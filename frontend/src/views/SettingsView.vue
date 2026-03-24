@@ -51,6 +51,50 @@
       </div>
     </div>
 
+    <div class="rounded-3xl border border-white/10 bg-white/5 p-6">
+      <h2 class="text-2xl font-display">Profil</h2>
+      <p class="text-white/60">Aktualisiere deinen Anzeigenamen.</p>
+      <form class="mt-4 flex flex-col gap-4 sm:flex-row sm:items-end" @submit.prevent="saveProfile">
+        <label class="flex-1 text-sm text-white/70">
+          <span>Anzeige-Name</span>
+          <input v-model="profileForm.displayName" class="input mt-2" placeholder="Name" required />
+        </label>
+        <button
+          class="rounded-2xl bg-aurora/90 px-4 py-3 text-sm font-semibold text-midnight"
+          type="submit"
+          :disabled="profileSaving"
+        >
+          {{ profileSaving ? 'Speichere...' : 'Speichern' }}
+        </button>
+      </form>
+      <p v-if="profileMessage" class="mt-2 text-sm text-white/70">{{ profileMessage }}</p>
+    </div>
+
+    <div class="rounded-3xl border border-white/10 bg-white/5 p-6">
+      <h2 class="text-2xl font-display">Passwort ändern</h2>
+      <p class="text-white/60">Neues Passwort setzt dein aktuelles voraus.</p>
+      <form class="mt-4 grid gap-4 md:grid-cols-3" @submit.prevent="savePassword">
+        <label class="text-sm text-white/70">
+          <span>Aktuelles Passwort</span>
+          <input v-model="passwordForm.currentPassword" class="input mt-2" type="password" required />
+        </label>
+        <label class="text-sm text-white/70">
+          <span>Neues Passwort</span>
+          <input v-model="passwordForm.newPassword" class="input mt-2" type="password" required minlength="8" />
+        </label>
+        <div class="flex items-end">
+          <button
+            class="w-full rounded-2xl bg-gradient-to-r from-aurora to-pulse px-4 py-3 text-sm font-semibold text-midnight"
+            type="submit"
+            :disabled="passwordSaving"
+          >
+            {{ passwordSaving ? 'Aktualisiere...' : 'Passwort speichern' }}
+          </button>
+        </div>
+      </form>
+      <p v-if="passwordMessage" class="mt-2 text-sm text-white/70">{{ passwordMessage }}</p>
+    </div>
+
     <div v-if="selectedConnection" class="rounded-3xl border border-white/10 bg-white/5 p-6">
       <h2 class="text-2xl font-display">Sensor-Zuordnung – {{ selectedConnection.name }}</h2>
       <p class="text-white/60">Wähle passende Sensoren für Schritte, Gewicht, Distanz und aktive Minuten.</p>
@@ -142,6 +186,12 @@ const entitySearch = ref('');
 const importDate = ref<string>('');
 const syncInfo = ref<any>(null);
 const settingsLoading = ref(false);
+const profileSaving = ref(false);
+const profileMessage = ref('');
+const passwordSaving = ref(false);
+const passwordMessage = ref('');
+const profileForm = reactive({ displayName: '' });
+const passwordForm = reactive({ currentPassword: '', newPassword: '' });
 
 const connections = computed(() => store.connections);
 const selectedConnection = computed(() => connections.value.find((c) => c.id === selectedConnectionId.value) ?? null);
@@ -227,6 +277,45 @@ const toggleLeaderboardVisibility = async () => {
     await authStore.updateSettings({ showOnLeaderboard: !showOnLeaderboard.value });
   } finally {
     settingsLoading.value = false;
+  }
+};
+
+watch(
+  () => authStore.user?.displayName,
+  (value) => {
+    profileForm.displayName = value ?? '';
+  },
+  { immediate: true }
+);
+
+const saveProfile = async () => {
+  profileSaving.value = true;
+  profileMessage.value = '';
+  try {
+    await authStore.updateProfile({ displayName: profileForm.displayName });
+    profileMessage.value = 'Profil aktualisiert.';
+  } catch (error: any) {
+    profileMessage.value = error?.response?.data?.message ?? 'Profil konnte nicht aktualisiert werden.';
+  } finally {
+    profileSaving.value = false;
+  }
+};
+
+const savePassword = async () => {
+  passwordSaving.value = true;
+  passwordMessage.value = '';
+  try {
+    await authStore.updatePassword({
+      currentPassword: passwordForm.currentPassword,
+      newPassword: passwordForm.newPassword
+    });
+    passwordMessage.value = 'Passwort aktualisiert.';
+    passwordForm.currentPassword = '';
+    passwordForm.newPassword = '';
+  } catch (error: any) {
+    passwordMessage.value = error?.response?.data?.message ?? 'Passwort konnte nicht aktualisiert werden.';
+  } finally {
+    passwordSaving.value = false;
   }
 };
 </script>

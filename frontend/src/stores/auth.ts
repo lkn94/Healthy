@@ -41,12 +41,24 @@ export const useAuthStore = defineStore('auth', {
       }
     },
     async fetchSettings() {
-      const { data } = await api.get<{ showOnLeaderboard: boolean }>('/user/settings');
+      const { data } = await api.get<{ showOnLeaderboard: boolean; displayName: string }>('/user/settings');
       this.settings = { showOnLeaderboard: data.showOnLeaderboard };
+      if (this.user) {
+        this.user.displayName = data.displayName;
+      }
     },
     async updateSettings(payload: { showOnLeaderboard: boolean }) {
       const { data } = await api.patch<{ showOnLeaderboard: boolean }>('/user/settings', payload);
       this.settings = { showOnLeaderboard: data.showOnLeaderboard };
+    },
+    async updateProfile(payload: { displayName: string }) {
+      const { data } = await api.patch<{ displayName: string }>('/user/profile', payload);
+      if (this.user) {
+        this.user.displayName = data.displayName;
+      }
+    },
+    async updatePassword(payload: { currentPassword: string; newPassword: string }) {
+      await api.patch('/user/password', payload);
     },
     async login(payload: { email: string; password: string }) {
       this.loading = true;

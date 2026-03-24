@@ -162,6 +162,11 @@ const weightDisplay = computed(() => {
 
 const weightDateLabel = computed(() => {
   const label = insights.value?.weightDate;
-  return label ?? 'Keine Messung';
+  if (!label) return 'Keine Messung';
+  return new Intl.DateTimeFormat('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  }).format(new Date(label));
 });
 </script>
