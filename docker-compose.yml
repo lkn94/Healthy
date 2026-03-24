@@ -3,8 +3,15 @@ services:
     build: .
     ports:
       - "${APP_PORT:-3000}:3000"
-    env_file:
-      - .env
+    environment:
+      APP_PORT: "${APP_PORT:-3000}"
+      JWT_SECRET: "${JWT_SECRET}"
+      ENCRYPTION_KEY: "${ENCRYPTION_KEY}"
+      DB_URL: "${DB_URL:-file:../../data/app.db}"
+      SYNC_INTERVAL_MINUTES: "${SYNC_INTERVAL_MINUTES:-30}"
+      DEFAULT_DAILY_GOAL: "${DEFAULT_DAILY_GOAL:-10000}"
+      DEFAULT_STEP_LENGTH_METERS: "${DEFAULT_STEP_LENGTH_METERS:-0.75}"
+      VITE_API_URL: "${VITE_API_URL:-http://localhost:3000/api}"
     volumes:
       - healthy_app_data:/data
     restart: unless-stopped
