@@ -128,6 +128,75 @@ const pickMealReference = (calories: number) => {
   return match;
 };
 
+const defaultCollectionModules = [
+  {
+    key: 'command-center',
+    title: 'Basis-Kommandozentrale',
+    description: 'Startpunkt deines SmartHomes – EVA wacht über alle Sensoren.',
+    requiredEnergy: 0,
+    requiredAutomation: 0,
+    requiredAI: 0,
+    icon: '🏠',
+    story: 'Kommandozentrale online. EVA verfolgt deine Mission.',
+    orderIndex: 0
+  },
+  {
+    key: 'smart-lighting',
+    title: 'Smarte Beleuchtung',
+    description: 'Adaptives Licht, das auf deinen Rhythmus reagiert.',
+    requiredEnergy: 5000,
+    requiredAutomation: 0,
+    requiredAI: 0,
+    icon: '💡',
+    story: 'Deine Lampen sprechen jetzt mit EVA.',
+    orderIndex: 1
+  },
+  {
+    key: 'climate-core',
+    title: 'Klima-Zentrale',
+    description: 'Temperatur- und Luftqualitätssteuerung in Echtzeit.',
+    requiredEnergy: 15000,
+    requiredAutomation: 0,
+    requiredAI: 0,
+    icon: '🌡️',
+    story: 'Das Klima folgt nun deinem Puls.',
+    orderIndex: 2
+  },
+  {
+    key: 'security-hub',
+    title: 'Security Hub',
+    description: 'Sensoren sichern Türen, Fenster und Bewegungen.',
+    requiredEnergy: 30000,
+    requiredAutomation: 100,
+    requiredAI: 0,
+    icon: '🛡️',
+    story: 'Deine Basis verteidigt sich smart.',
+    orderIndex: 3
+  },
+  {
+    key: 'automation-brain',
+    title: 'Automation Brain',
+    description: 'Predictive Szenen automatisieren deinen Alltag.',
+    requiredEnergy: 60000,
+    requiredAutomation: 300,
+    requiredAI: 0,
+    icon: '🧠',
+    story: 'Routine-Skripte lernen täglich dazu.',
+    orderIndex: 4
+  },
+  {
+    key: 'ai-companion',
+    title: 'KI-Companion',
+    description: 'Persönliche Assistenz mit EVA-Intelligenz.',
+    requiredEnergy: 120000,
+    requiredAutomation: 600,
+    requiredAI: 50,
+    icon: '🤖',
+    story: 'Deine KI spricht mit dir – überall.',
+    orderIndex: 5
+  }
+];
+
 export default async function dashboardRoutes(app: FastifyInstance) {
   const getUserId = (request: FastifyRequest) => request.user.id;
 
@@ -177,7 +246,11 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     const stats = await loadLifetimeStats(userId);
     const { total, todayCount } = await dailyChallengeCount(userId);
 
-    const modules = await app.prisma.collectionModule.findMany({ orderBy: { orderIndex: 'asc' } });
+    let modules = await app.prisma.collectionModule.findMany({ orderBy: { orderIndex: 'asc' } });
+    if (!modules.length) {
+      await app.prisma.collectionModule.createMany({ data: defaultCollectionModules });
+      modules = await app.prisma.collectionModule.findMany({ orderBy: { orderIndex: 'asc' } });
+    }
 
     const energyPoints = stats.totalSteps;
     const automationPoints = todayCount;
