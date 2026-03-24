@@ -94,6 +94,9 @@
       <p class="text-white/60 text-sm">
         Sobald du genug Punkte hast, baut EVA {{ nextModule.title }} und bringt neue Funktionen wie:
       </p>
+      <p class="text-white/70 text-sm mt-1">
+        Benötigt: {{ requirementText(nextModule) }}
+      </p>
       <ul class="list-disc list-inside text-white/70 text-sm mt-3">
         <li v-if="nextModule.key === 'smart-lighting'">Adaptives Licht passend zu Tageszeit.</li>
         <li v-else-if="nextModule.key === 'climate-core'">Auto-Klima mit Luftqualitäts-Checks.</li>
