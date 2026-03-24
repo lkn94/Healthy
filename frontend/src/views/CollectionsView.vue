@@ -46,37 +46,36 @@
     <div class="rounded-3xl border border-white/10 bg-white/5 p-6 space-y-4">
       <h3 class="text-xl font-display">Blueprint</h3>
       <p class="text-white/60 text-sm">
-        Dein SmartHome füllt sich Modul für Modul. Freigeschaltete Räume leuchten, gesperrte Räume zeigen, was noch fehlt.
+        Dein Zuhause wächst sichtbar: jedes Modul besitzt einen Raum im Grundriss. Freigeschaltete Bereiche leuchten, gesperrte bleiben transparent.
       </p>
-      <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <div
-          v-for="module in collections.inventory"
-          :key="module.id + '-blueprint'"
-          class="rounded-2xl border p-4 blueprint-tile relative overflow-hidden"
-          :class="module.unlocked ? 'border-aurora/50 bg-aurora/10 blueprint-active' : 'border-white/10 bg-black/10 blueprint-locked'"
-        >
-          <div class="absolute inset-0 pointer-events-none blueprint-grid"></div>
-          <div class="flex items-center gap-3">
-            <div class="h-10 w-10 rounded-xl bg-black/30 flex items-center justify-center text-2xl">
-              {{ module.icon ?? '🏠' }}
+      <div class="blueprint-wrapper">
+        <div class="blueprint-plan">
+          <div
+            v-for="slot in blueprintSlots"
+            :key="slot.id"
+            class="blueprint-room"
+            :style="{ gridArea: slot.area }"
+            :class="slot.module?.unlocked ? 'room-active' : 'room-locked'"
+          >
+            <div class="room-content">
+              <div class="room-icon">{{ slot.module?.icon ?? slot.fallbackIcon }}</div>
+              <div>
+                <p class="text-xs" :class="slot.module?.unlocked ? 'text-aurora' : 'text-white/50'">
+                  {{ slot.module?.unlocked ? 'Aktiv' : 'In Bau' }}
+                </p>
+                <p class="text-white font-display text-sm">{{ slot.module?.title ?? slot.fallbackTitle }}</p>
+              </div>
             </div>
-            <div>
-              <p class="text-xs uppercase tracking-[0.3em]" :class="module.unlocked ? 'text-aurora' : 'text-white/50'">
-                {{ module.unlocked ? 'Aktiv' : 'Geplant' }}
-              </p>
-              <p class="text-white font-display">{{ module.title }}</p>
+            <p class="text-[11px] text-white/70" v-if="slot.module?.story && slot.module?.unlocked">{{ slot.module.story }}</p>
+            <div class="mt-2 space-y-1 text-[11px]" v-if="slot.module">
+              <CollectionProgress label="Energie" :value="slot.module.progress.energy" />
+              <CollectionProgress label="Automation" :value="slot.module.progress.automation" />
+              <CollectionProgress label="KI" :value="slot.module.progress.ai" />
             </div>
+            <p class="text-[11px] text-white/60" v-if="slot.module && !slot.module.unlocked">
+              Noch {{ remainingText(slot.module) }}
+            </p>
           </div>
-          <p class="text-white/70 text-xs mt-2">{{ module.description }}</p>
-          <p v-if="module.story && module.unlocked" class="text-aurora/80 text-xs mt-1">{{ module.story }}</p>
-          <div class="mt-3 space-y-1 text-[11px] text-white/60">
-            <CollectionProgress label="Energie" :value="module.progress.energy" />
-            <CollectionProgress label="Automation" :value="module.progress.automation" />
-            <CollectionProgress label="KI" :value="module.progress.ai" />
-          </div>
-          <p v-if="!module.unlocked" class="text-[11px] text-white/60 mt-2">
-            Noch {{ remainingText(module) }} bis zur Aktivierung.
-          </p>
         </div>
       </div>
     </div>
@@ -120,6 +119,17 @@ const collections = computed(() =>
 
 const nextModule = computed(() => collections.value.inventory.find((module) => !module.unlocked));
 
+const moduleByKey = (key: string) => collections.value.inventory.find((module) => module.key === key);
+
+const blueprintSlots = computed(() => [
+  { id: 'slot-command', area: 'base', fallbackTitle: 'Basiszentrum', fallbackIcon: '🏠', module: moduleByKey('command-center') },
+  { id: 'slot-light', area: 'living', fallbackTitle: 'Lichtdeck', fallbackIcon: '💡', module: moduleByKey('smart-lighting') },
+  { id: 'slot-climate', area: 'climate', fallbackTitle: 'Klima-Hub', fallbackIcon: '🌡️', module: moduleByKey('climate-core') },
+  { id: 'slot-security', area: 'security', fallbackTitle: 'Security', fallbackIcon: '🛡️', module: moduleByKey('security-hub') },
+  { id: 'slot-automation', area: 'automation', fallbackTitle: 'Automation Brain', fallbackIcon: '🧠', module: moduleByKey('automation-brain') },
+  { id: 'slot-ai', area: 'ai', fallbackTitle: 'KI-Companion', fallbackIcon: '🤖', module: moduleByKey('ai-companion') }
+]);
+
 const heroTitle = computed(() =>
   nextModule.value ? `Nächste Mission: ${nextModule.value.title}` : 'Alle Module aktiviert'
 );
@@ -153,22 +163,80 @@ const remainingText = (module: (typeof collections.value.inventory)[number]) => 
 </script>
 
 <style scoped>
-.blueprint-tile {
+.blueprint-wrapper {
+  overflow-x: auto;
+}
+
+.blueprint-plan {
+  min-height: 320px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(140px, 1fr));
+  grid-template-rows: repeat(2, 160px);
+  grid-template-areas:
+    'base living climate'
+    'security automation ai';
+  gap: 16px;
+  background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.08), transparent 60%);
+  padding: 16px;
+  border-radius: 24px;
   position: relative;
 }
-.blueprint-grid::before {
+
+.blueprint-plan::after {
   content: '';
   position: absolute;
-  inset: 0;
-  background-size: 24px 24px;
-  background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
-  opacity: 0.6;
+  inset: 16px;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  pointer-events: none;
 }
-.blueprint-active {
-  box-shadow: 0 10px 30px rgba(55, 242, 192, 0.2);
+
+.blueprint-room {
+  position: relative;
+  border-radius: 18px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
-.blueprint-locked {
+
+.blueprint-room.room-active {
+  border-color: rgba(55, 242, 192, 0.6);
+  box-shadow: 0 10px 25px rgba(55, 242, 192, 0.2);
+  background: rgba(55, 242, 192, 0.08);
+}
+
+.blueprint-room.room-locked {
   opacity: 0.85;
+}
+
+.room-content {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.room-icon {
+  height: 48px;
+  width: 48px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+}
+
+@media (max-width: 640px) {
+  .blueprint-plan {
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+    grid-template-areas:
+      'base living'
+      'climate security'
+      'automation ai';
+    grid-template-rows: repeat(3, 160px);
+  }
 }
 </style>
