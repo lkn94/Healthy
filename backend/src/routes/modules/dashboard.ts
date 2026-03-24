@@ -106,10 +106,14 @@ const computeAdaptiveGoal = (days: AggregatedDay[]) => {
 };
 
 const mealReferences = [
+  { id: 'banana', label: 'Banane', calories: 100 },
+  { id: 'joghurt', label: 'Joghurt mit Nüssen', calories: 200 },
   { id: 'salad', label: 'Salatbowl', calories: 350 },
   { id: 'bowl', label: 'Proteinschüssel', calories: 500 },
   { id: 'burger', label: 'Burger', calories: 650 },
-  { id: 'pizza', label: 'Pizzastück', calories: 800 }
+  { id: 'pizza', label: 'Pizzastück', calories: 800 },
+  { id: 'pasta', label: 'Pasta-Portion', calories: 900 },
+  { id: 'cake', label: 'Stück Kuchen', calories: 450 }
 ];
 
 const pickMealReference = (calories: number) => {
