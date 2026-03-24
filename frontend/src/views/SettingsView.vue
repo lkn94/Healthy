@@ -73,6 +73,15 @@
             </option>
           </select>
         </label>
+        <label class="space-y-2 text-sm text-white/70">
+          <span>Kalorien-Sensor</span>
+          <select v-model="mapping.caloriesEntityId" class="input">
+            <option value="">-</option>
+            <option v-for="entity in filteredEntities" :key="entity.entity_id" :value="entity.entity_id">
+              {{ entityLabel(entity) }}
+            </option>
+          </select>
+        </label>
         <button type="submit" class="md:col-span-2 rounded-2xl bg-gradient-to-r from-aurora to-pulse px-4 py-3 text-midnight font-semibold">Speichern</button>
       </form>
 
@@ -100,7 +109,8 @@ const mapping = reactive({
   stepsEntityId: '',
   weightEntityId: '',
   distanceEntityId: '',
-  activeMinutesEntityId: ''
+  activeMinutesEntityId: '',
+  caloriesEntityId: ''
 });
 
 const selectedConnectionId = ref<string | null>(null);
@@ -128,7 +138,8 @@ watch(selectedConnectionId, async (id) => {
     stepsEntityId: conn?.mapping?.stepsEntityId ?? '',
     weightEntityId: conn?.mapping?.weightEntityId ?? '',
     distanceEntityId: conn?.mapping?.distanceEntityId ?? '',
-    activeMinutesEntityId: conn?.mapping?.activeMinutesEntityId ?? ''
+    activeMinutesEntityId: conn?.mapping?.activeMinutesEntityId ?? '',
+    caloriesEntityId: conn?.mapping?.caloriesEntityId ?? ''
   });
   entityOptions.value = await store.fetchEntities(id);
   entitySearch.value = '';

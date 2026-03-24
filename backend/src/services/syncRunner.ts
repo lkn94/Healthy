@@ -40,7 +40,8 @@ export const runSyncJob = async (params: SyncRunnerParams) => {
       connection.mapping.stepsEntityId,
       connection.mapping.weightEntityId,
       connection.mapping.distanceEntityId,
-      connection.mapping.activeMinutesEntityId
+      connection.mapping.activeMinutesEntityId,
+      connection.mapping.caloriesEntityId
     ].filter(Boolean) as string[];
 
     const history = await client.fetchHistory({
@@ -71,6 +72,7 @@ export const runSyncJob = async (params: SyncRunnerParams) => {
           weight: snapshot.weight,
           distanceKm: snapshot.distanceKm,
           activeMinutes: snapshot.activeMinutes,
+          calories: snapshot.calories,
           source: params.type.toLowerCase()
         },
         create: {
@@ -81,6 +83,7 @@ export const runSyncJob = async (params: SyncRunnerParams) => {
           weight: snapshot.weight,
           distanceKm: snapshot.distanceKm,
           activeMinutes: snapshot.activeMinutes,
+          calories: snapshot.calories,
           source: params.type.toLowerCase()
         }
       });

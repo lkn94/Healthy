@@ -16,7 +16,8 @@ const mappingBodySchema = z.object({
   stepsEntityId: z.string().min(3),
   weightEntityId: z.string().optional(),
   distanceEntityId: z.string().optional(),
-  activeMinutesEntityId: z.string().optional()
+  activeMinutesEntityId: z.string().optional(),
+  caloriesEntityId: z.string().optional()
 });
 
 const importBodySchema = z.object({

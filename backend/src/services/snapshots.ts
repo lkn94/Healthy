@@ -16,6 +16,7 @@ export interface DailySnapshotResult {
   weight?: number;
   distanceKm?: number;
   activeMinutes?: number;
+  calories?: number;
 }
 
 const parseNumber = (value: string) => {
@@ -33,7 +34,13 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
 
   const dayAggregation = new Map<
     string,
-    { steps?: number; weightValues: number[]; distance?: number; activeMinutes?: number }
+    {
+      steps?: number;
+      weightValues: number[];
+      distance?: number;
+      activeMinutes?: number;
+      calories?: number;
+    }
   >();
 
   const trackEntry = (entityId: string | null | undefined, handler: (entry: HaStateEntity) => void) => {
@@ -83,6 +90,14 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
     day.activeMinutes = Math.max(day.activeMinutes ?? 0, Math.round(value));
   });
 
+  trackEntry(params.mapping.caloriesEntityId, (entry) => {
+    const value = parseNumber(entry.state);
+    if (value === undefined) return;
+    const dayKey = entry.last_changed.split('T')[0];
+    const day = ensureDay(dayKey);
+    day.calories = Math.max(day.calories ?? 0, Math.round(value));
+  });
+
   const snapshots: DailySnapshotResult[] = [];
   const days = eachDayOfInterval({ start: startOfDay(params.from), end: startOfDay(params.to) });
 
@@ -100,13 +115,15 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
       ? Number(((steps * params.defaultStepLengthMeters) / 1000).toFixed(2))
       : undefined;
     const activeMinutes = aggregate?.activeMinutes;
+    const calories = aggregate?.calories;
 
     snapshots.push({
       date: day,
       steps,
       weight,
       distanceKm,
-      activeMinutes
+      activeMinutes,
+      calories
     });
   }
 

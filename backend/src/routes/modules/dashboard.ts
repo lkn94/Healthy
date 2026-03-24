@@ -17,10 +17,11 @@ interface AggregatedDay {
   weight?: number;
   distanceKm?: number;
   activeMinutes?: number;
+  calories?: number;
 }
 
 const aggregateSnapshots = (snapshots: AggregatedDay[]): AggregatedDay[] => {
-  const map = new Map<string, { date: Date; steps: number; weightValues: number[]; distance: number; activeMinutes: number }>();
+  const map = new Map<string, { date: Date; steps: number; weightValues: number[]; distance: number; activeMinutes: number; calories: number }>();
 
   for (const snapshot of snapshots) {
     const key = snapshot.date.toISOString().split('T')[0];
@@ -30,7 +31,8 @@ const aggregateSnapshots = (snapshots: AggregatedDay[]): AggregatedDay[] => {
         steps: 0,
         weightValues: [],
         distance: 0,
-        activeMinutes: 0
+        activeMinutes: 0,
+        calories: 0
       });
     }
     const entry = map.get(key)!;
@@ -44,6 +46,9 @@ const aggregateSnapshots = (snapshots: AggregatedDay[]): AggregatedDay[] => {
     if (snapshot.activeMinutes) {
       entry.activeMinutes += snapshot.activeMinutes;
     }
+    if (snapshot.calories) {
+      entry.calories += snapshot.calories;
+    }
   }
 
   return [...map.values()] 
@@ -54,7 +59,8 @@ const aggregateSnapshots = (snapshots: AggregatedDay[]): AggregatedDay[] => {
         ? Number((entry.weightValues.reduce((a, b) => a + b, 0) / entry.weightValues.length).toFixed(2))
         : undefined,
       distanceKm: entry.distance ? Number(entry.distance.toFixed(2)) : undefined,
-      activeMinutes: entry.activeMinutes || undefined
+      activeMinutes: entry.activeMinutes || undefined,
+      calories: entry.calories || undefined
     }))
     .sort((a, b) => a.date.getTime() - b.date.getTime());
 };
@@ -99,6 +105,24 @@ const computeAdaptiveGoal = (days: AggregatedDay[]) => {
   };
 };
 
+const mealReferences = [
+  { id: 'salad', label: 'Salat Bowl', calories: 350 },
+  { id: 'bowl', label: 'Protein Bowl', calories: 500 },
+  { id: 'burger', label: 'Burger', calories: 650 },
+  { id: 'pizza', label: 'Pizza-Stück', calories: 800 }
+];
+
+const pickMealReference = (calories: number) => {
+  if (calories <= 0) return mealReferences[0];
+  let match = mealReferences[0];
+  for (const meal of mealReferences) {
+    if (calories >= meal.calories) {
+      match = meal;
+    }
+  }
+  return match;
+};
+
 export default async function dashboardRoutes(app: FastifyInstance) {
   const getUserId = (request: FastifyRequest) => request.user.id;
 
@@ -113,7 +137,8 @@ export default async function dashboardRoutes(app: FastifyInstance) {
         steps: snapshot.steps,
         weight: snapshot.weight ?? undefined,
         distanceKm: snapshot.distanceKm ?? undefined,
-        activeMinutes: snapshot.activeMinutes ?? undefined
+        activeMinutes: snapshot.activeMinutes ?? undefined,
+        calories: snapshot.calories ?? undefined
       }))
     );
   };
@@ -255,6 +280,45 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     return {
       trend: last30,
       averageWeight
+    };
+  });
+
+  app.get('/calories', { preHandler: [app.authenticate] }, async (request) => {
+    const userId = getUserId(request);
+    const today = startOfDay(new Date());
+    const days = await loadAggregatedDays(userId);
+    const series = days.map((day) => ({
+      date: formatISO(day.date, { representation: 'date' }),
+      calories: Math.round(day.calories ?? 0)
+    }));
+
+    const totalCalories = series.reduce((sum, item) => sum + item.calories, 0);
+    const averageCalories = series.length ? Math.round(totalCalories / series.length) : 0;
+    const baseMealCalories = 650;
+    const totalMeals = baseMealCalories ? Number((totalCalories / baseMealCalories).toFixed(1)) : 0;
+
+    const todayKey = formatISO(today, { representation: 'date' });
+    const todayEntry = series.find((entry) => entry.date === todayKey) ?? { date: todayKey, calories: 0 };
+    const meal = pickMealReference(todayEntry.calories);
+    const mealCount = meal.calories ? Number((todayEntry.calories / meal.calories).toFixed(1)) : 0;
+
+    return {
+      series,
+      totals: {
+        totalCalories,
+        averageCalories,
+        totalMeals,
+        baseMealCalories
+      },
+      today: {
+        calories: todayEntry.calories,
+        mealEquivalent: {
+          label: meal.label,
+          calories: meal.calories,
+          count: mealCount
+        }
+      },
+      references: mealReferences
     };
   });
 

@@ -18,6 +18,7 @@ export interface ConnectionDTO {
     weightEntityId?: string | null;
     distanceEntityId?: string | null;
     activeMinutesEntityId?: string | null;
+    caloriesEntityId?: string | null;
   } | null;
   lifetimeStat?: LifetimeStatDTO | null;
 }
@@ -72,4 +73,23 @@ export interface ChallengeDTO {
     longestStreak: number;
     bestWeekSteps: number;
   };
+}
+
+export interface CaloriesResponse {
+  series: { date: string; calories: number }[];
+  totals: {
+    totalCalories: number;
+    averageCalories: number;
+    totalMeals: number;
+    baseMealCalories: number;
+  };
+  today: {
+    calories: number;
+    mealEquivalent: {
+      label: string;
+      calories: number;
+      count: number;
+    };
+  };
+  references: { id: string; label: string; calories: number }[];
 }

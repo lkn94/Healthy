@@ -44,6 +44,7 @@ model SensorMapping {
   weightEntityId        String?
   distanceEntityId      String?
   activeMinutesEntityId String?
+  caloriesEntityId      String?
   createdAt             DateTime                @default(now())
   updatedAt             DateTime                @updatedAt
 }
@@ -59,6 +60,7 @@ model DailyHealthSnapshot {
   weight       Float?
   distanceKm   Float?
   activeMinutes Int?
+  calories     Int?
   source       String
   createdAt    DateTime                @default(now())
   updatedAt    DateTime                @updatedAt
