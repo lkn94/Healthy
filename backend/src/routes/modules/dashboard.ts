@@ -464,33 +464,63 @@ export default async function dashboardRoutes(app: FastifyInstance) {
 const challengeDefinitions = [
   {
     id: 'steps-100k',
-      title: '100k Pioneer',
-      description: 'Erreiche 100.000 Schritte insgesamt.',
-      criteria: { totalSteps: 100_000 }
-    },
-    {
-      id: 'steps-500k',
-      title: 'Half-Million Walker',
-      description: '500.000 Schritte gesamt.',
-      criteria: { totalSteps: 500_000 }
-    },
-    {
-      id: 'streak-7',
-      title: '7-Day Momentum',
-      description: 'Halte eine Serie von 7 aktiven Tagen (>=5.000 Schritte).',
-      criteria: { longestStreak: 7 }
-    },
-    {
-      id: 'streak-30',
-      title: '30-Day Hero',
-      description: '30 Tage hintereinander aktiv.',
-      criteria: { longestStreak: 30 }
-    },
-    {
-      id: 'best-week-90k',
-      title: 'Weekly Legend',
-      description: 'Eine Woche mit mindestens 90.000 Schritten.',
-      criteria: { bestWeekSteps: 90_000 }
+    title: '100k Pioneer',
+    description: 'Erreiche 100.000 Schritte insgesamt.',
+    criteria: { totalSteps: 100_000 }
+  },
+  {
+    id: 'steps-500k',
+    title: 'Half-Million Walker',
+    description: '500.000 Schritte gesamt.',
+    criteria: { totalSteps: 500_000 }
+  },
+  {
+    id: 'steps-1m',
+    title: 'Million Runner',
+    description: '1.000.000 Schritte gesamt.',
+    criteria: { totalSteps: 1_000_000 }
+  },
+  {
+    id: 'steps-2m',
+    title: 'Double Orbit',
+    description: '2.000.000 Schritte gesamt.',
+    criteria: { totalSteps: 2_000_000 }
+  },
+  {
+    id: 'steps-5m',
+    title: 'Galaxy Walker',
+    description: '5.000.000 Schritte gesamt.',
+    criteria: { totalSteps: 5_000_000 }
+  },
+  {
+    id: 'streak-7',
+    title: '7-Day Momentum',
+    description: 'Halte eine Serie von 7 aktiven Tagen (>=5.000 Schritte).',
+    criteria: { longestStreak: 7 }
+  },
+  {
+    id: 'streak-30',
+    title: '30-Day Hero',
+    description: '30 Tage hintereinander aktiv.',
+    criteria: { longestStreak: 30 }
+  },
+  {
+    id: 'streak-90',
+    title: 'Quarter Marathon',
+    description: '90 Tage ununterbrochene Serie.',
+    criteria: { longestStreak: 90 }
+  },
+  {
+    id: 'best-week-90k',
+    title: 'Weekly Legend',
+    description: 'Eine Woche mit mindestens 90.000 Schritten.',
+    criteria: { bestWeekSteps: 90_000 }
+  },
+  {
+    id: 'best-week-150k',
+    title: 'Weekly Titan',
+    description: 'Eine Woche mit mindestens 150.000 Schritten.',
+    criteria: { bestWeekSteps: 150_000 }
   }
 ];
 
