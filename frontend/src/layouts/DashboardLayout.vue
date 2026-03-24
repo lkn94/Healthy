@@ -86,7 +86,7 @@ import { useRoute } from 'vue-router';
 import { computed } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { useConnectionsStore } from '../stores/connections';
-import { ChartBarIcon, SparklesIcon, ClockIcon, Cog6ToothIcon, HeartIcon } from '@heroicons/vue/24/outline';
+import { ChartBarIcon, SparklesIcon, ClockIcon, Cog6ToothIcon, HeartIcon, FlagIcon } from '@heroicons/vue/24/outline';
 
 const route = useRoute();
 const auth = useAuthStore();
@@ -111,6 +111,7 @@ const navItems = [
   { name: 'overview', label: 'Overview', to: '/overview', icon: SparklesIcon },
   { name: 'progress', label: 'Progress', to: '/progress', icon: ChartBarIcon },
   { name: 'lifetime', label: 'Lifetime', to: '/lifetime', icon: ClockIcon },
+  { name: 'challenges', label: 'Challenges', to: '/challenges', icon: FlagIcon },
   { name: 'body', label: 'Body & Recovery', to: '/body', icon: HeartIcon, badge: 'Live' },
   { name: 'settings', label: 'Settings', to: '/settings', icon: Cog6ToothIcon }
 ];

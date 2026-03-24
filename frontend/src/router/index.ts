@@ -6,6 +6,7 @@ import ProgressView from '../views/ProgressView.vue';
 import LifetimeView from '../views/LifetimeView.vue';
 import BodyView from '../views/BodyView.vue';
 import SettingsView from '../views/SettingsView.vue';
+import ChallengesView from '../views/ChallengesView.vue';
 import AuthView from '../views/AuthView.vue';
 
 const routes: RouteRecordRaw[] = [
@@ -30,6 +31,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'overview', name: 'overview', component: OverviewView },
       { path: 'progress', name: 'progress', component: ProgressView },
       { path: 'lifetime', name: 'lifetime', component: LifetimeView },
+      { path: 'challenges', name: 'challenges', component: ChallengesView },
       { path: 'body', name: 'body', component: BodyView },
       { path: 'settings', name: 'settings', component: SettingsView }
     ]

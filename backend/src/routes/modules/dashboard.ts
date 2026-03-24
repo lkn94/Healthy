@@ -214,4 +214,63 @@ export default async function dashboardRoutes(app: FastifyInstance) {
       averageWeight
     };
   });
+
+  const challengeDefinitions = [
+    {
+      id: 'steps-100k',
+      title: '100k Pioneer',
+      description: 'Erreiche 100.000 Schritte insgesamt.',
+      criteria: { totalSteps: 100_000 }
+    },
+    {
+      id: 'steps-500k',
+      title: 'Half-Million Walker',
+      description: '500.000 Schritte gesamt.',
+      criteria: { totalSteps: 500_000 }
+    },
+    {
+      id: 'streak-7',
+      title: '7-Day Momentum',
+      description: 'Halte eine Serie von 7 aktiven Tagen (>=5.000 Schritte).',
+      criteria: { longestStreak: 7 }
+    },
+    {
+      id: 'streak-30',
+      title: '30-Day Hero',
+      description: '30 Tage hintereinander aktiv.',
+      criteria: { longestStreak: 30 }
+    },
+    {
+      id: 'best-week-90k',
+      title: 'Weekly Legend',
+      description: 'Eine Woche mit mindestens 90.000 Schritten.',
+      criteria: { bestWeekSteps: 90_000 }
+    }
+  ];
+
+  app.get('/challenges', { preHandler: [app.authenticate] }, async (request) => {
+    const userId = getUserId(request);
+    const stats = await loadLifetimeStats(userId);
+
+    const challenges = challengeDefinitions.map((challenge) => {
+      const unlocked = Object.entries(challenge.criteria).every(([key, value]) => {
+        const statValue = (stats as Record<string, number>)[key];
+        return typeof statValue === 'number' && statValue >= (value as number);
+      });
+      return {
+        id: challenge.id,
+        title: challenge.title,
+        description: challenge.description,
+        unlocked,
+        criteria: challenge.criteria,
+        progress: {
+          totalSteps: stats.totalSteps,
+          longestStreak: stats.longestStreak,
+          bestWeekSteps: stats.bestWeekSteps
+        }
+      };
+    });
+
+    return { challenges };
+  });
 }

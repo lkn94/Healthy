@@ -54,3 +54,16 @@ export interface BodyResponse {
   trend: { date: string; weight?: number; activeMinutes: number }[];
   averageWeight: number | null;
 }
+
+export interface ChallengeDTO {
+  id: string;
+  title: string;
+  description: string;
+  unlocked: boolean;
+  criteria: Record<string, number>;
+  progress: {
+    totalSteps: number;
+    longestStreak: number;
+    bestWeekSteps: number;
+  };
+}
