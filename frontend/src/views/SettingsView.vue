@@ -6,7 +6,7 @@
       <form class="mt-6 grid gap-4 md:grid-cols-3" @submit.prevent="createConnection">
         <input v-model="connectionForm.name" class="input" placeholder="Name" required />
         <input v-model="connectionForm.baseUrl" class="input" placeholder="Base URL" required />
-        <input v-model="connectionForm.accessToken" class="input" placeholder="Long-Lived Token" required />
+        <input v-model="connectionForm.accessToken" class="input" placeholder="Langzeit-Token" required />
         <button type="submit" class="md:col-span-3 rounded-2xl bg-aurora/90 px-4 py-3 text-midnight font-semibold">
           Verbindung speichern
         </button>
@@ -21,9 +21,9 @@
             <span class="text-xs uppercase tracking-[0.4em] text-white/50">{{ connection.status }}</span>
           </div>
           <div class="mt-4 flex flex-wrap gap-2 text-sm">
-            <button class="pill" @click="selectConnection(connection.id)">Mapping</button>
+            <button class="pill" @click="selectConnection(connection.id)">Sensoren</button>
             <button class="pill" @click="handleTest(connection.id)">Testen</button>
-            <button class="pill" @click="handleSync(connection.id)">Sync</button>
+            <button class="pill" @click="handleSync(connection.id)">Sync auslösen</button>
             <button class="pill" @click="removeConnection(connection.id)">Löschen</button>
           </div>
         </div>
@@ -31,15 +31,15 @@
     </div>
 
     <div v-if="selectedConnection" class="rounded-3xl border border-white/10 bg-white/5 p-6">
-      <h2 class="text-2xl font-display">Sensor Mapping – {{ selectedConnection.name }}</h2>
-      <p class="text-white/60">Wähle passende Entities für Schritte, Gewicht, Distanz und Active Minutes.</p>
+      <h2 class="text-2xl font-display">Sensor-Zuordnung – {{ selectedConnection.name }}</h2>
+      <p class="text-white/60">Wähle passende Sensoren für Schritte, Gewicht, Distanz und aktive Minuten.</p>
       <form class="mt-6 grid gap-4 md:grid-cols-2" @submit.prevent="saveMapping">
         <label class="md:col-span-2 space-y-2 text-sm text-white/70">
           <span>Sensoren filtern</span>
           <input v-model="entitySearch" class="input" placeholder="sensor.schritte oder Name" />
         </label>
         <label class="space-y-2 text-sm text-white/70">
-          <span>Steps Entity</span>
+          <span>Schritt-Sensor</span>
           <select v-model="mapping.stepsEntityId" class="input" required>
             <option v-for="entity in filteredEntities" :key="entity.entity_id" :value="entity.entity_id">
               {{ entityLabel(entity) }}
@@ -47,7 +47,7 @@
           </select>
         </label>
         <label class="space-y-2 text-sm text-white/70">
-          <span>Weight Entity</span>
+          <span>Gewicht-Sensor</span>
           <select v-model="mapping.weightEntityId" class="input">
             <option value="">-</option>
             <option v-for="entity in filteredEntities" :key="entity.entity_id" :value="entity.entity_id">
@@ -56,7 +56,7 @@
           </select>
         </label>
         <label class="space-y-2 text-sm text-white/70">
-          <span>Distance Entity</span>
+          <span>Distanz-Sensor</span>
           <select v-model="mapping.distanceEntityId" class="input">
             <option value="">-</option>
             <option v-for="entity in filteredEntities" :key="entity.entity_id" :value="entity.entity_id">
@@ -65,7 +65,7 @@
           </select>
         </label>
         <label class="space-y-2 text-sm text-white/70">
-          <span>Active Minutes Entity</span>
+          <span>Aktive-Minuten-Sensor</span>
           <select v-model="mapping.activeMinutesEntityId" class="input">
             <option value="">-</option>
             <option v-for="entity in filteredEntities" :key="entity.entity_id" :value="entity.entity_id">
@@ -81,8 +81,8 @@
           <span>Import ab Datum</span>
           <input type="date" v-model="importDate" class="input" />
         </label>
-        <button class="pill" @click="handleImport">History Import</button>
-        <button class="pill" @click="handleSync(selectedConnection.id)">Sofort Sync</button>
+        <button class="pill" @click="handleImport">Historie importieren</button>
+        <button class="pill" @click="handleSync(selectedConnection.id)">Sofort synchronisieren</button>
       </div>
       <p v-if="syncInfo" class="mt-4 text-sm text-white/60">Letzter Job: {{ syncInfo.status }} – {{ syncInfo.importedDays }} Tage</p>
     </div>

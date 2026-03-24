@@ -18,12 +18,12 @@
       </div>
       <div class="rounded-3xl border border-white/10 bg-gradient-to-br from-pulse/20 to-midnight p-6 space-y-4">
         <div>
-          <p class="text-xs uppercase tracking-[0.4em] text-white/50">Best Day</p>
+          <p class="text-xs uppercase tracking-[0.4em] text-white/50">Bester Tag</p>
           <p class="text-4xl font-display text-white">{{ records.bestDaySteps }}</p>
           <p class="text-sm text-white/60">{{ records.bestDayDate }}</p>
         </div>
         <div>
-          <p class="text-xs uppercase tracking-[0.4em] text-white/50">Best Week</p>
+          <p class="text-xs uppercase tracking-[0.4em] text-white/50">Beste Woche</p>
           <p class="text-4xl font-display text-white">{{ records.bestWeekSteps }}</p>
         </div>
       </div>
@@ -63,7 +63,7 @@ const lineChart = computed(() => ({
   },
   series: [
     {
-      name: 'Steps',
+      name: 'Schritte',
       data: progress.value?.last30.map((item) => item.steps) ?? [],
       type: 'line',
       smooth: true,
@@ -121,7 +121,7 @@ const heatmapOptions = computed(() => {
     },
     series: [
       {
-        name: 'Steps',
+        name: 'Schritte',
         type: 'heatmap',
         data,
         label: { show: false },

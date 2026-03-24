@@ -9,7 +9,7 @@
         <EChart :options="weightChart" height="300px" class="mt-4" />
       </div>
       <div class="rounded-3xl border border-white/10 bg-gradient-to-br from-aurora/20 to-midnight p-6">
-        <p class="text-xs uppercase tracking-[0.4em] text-white/50">Active Minutes</p>
+        <p class="text-xs uppercase tracking-[0.4em] text-white/50">Aktive Minuten</p>
         <p class="mt-4 text-4xl font-display">{{ activeMinutesTotal }}</p>
         <p class="mt-2 text-white/60">Summe der letzten 30 Tage</p>
       </div>

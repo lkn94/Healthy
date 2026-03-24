@@ -52,12 +52,12 @@
       <header class="px-6 lg:px-12 py-8 flex flex-col gap-6 border-b border-white/5 bg-gradient-to-r from-eclipse to-midnight">
         <div class="flex flex-col lg:flex-row lg:items-center gap-4">
           <div>
-            <p class="text-sm uppercase tracking-[0.4em] text-white/50">Welcome back</p>
-            <h1 class="text-3xl font-display font-semibold">{{ auth.user?.displayName ?? 'Explorer' }}</h1>
+            <p class="text-sm uppercase tracking-[0.4em] text-white/50">Willkommen zurück</p>
+            <h1 class="text-3xl font-display font-semibold">{{ auth.user?.displayName ?? 'Athlet' }}</h1>
           </div>
           <div class="flex-1 flex flex-wrap gap-4 text-xs text-white/70">
             <div class="flex-1 min-w-[140px] rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-              <p class="uppercase tracking-widest text-white/50">Connections</p>
+              <p class="uppercase tracking-widest text-white/50">Verbindungen</p>
               <p class="text-2xl font-display">{{ connectionCount }}</p>
             </div>
             <div class="flex-1 min-w-[140px] rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
@@ -108,12 +108,12 @@ const lastSyncLabel = computed(() => {
 });
 
 const navItems = [
-  { name: 'overview', label: 'Overview', to: '/overview', icon: SparklesIcon },
-  { name: 'progress', label: 'Progress', to: '/progress', icon: ChartBarIcon },
-  { name: 'lifetime', label: 'Lifetime', to: '/lifetime', icon: ClockIcon },
-  { name: 'challenges', label: 'Challenges', to: '/challenges', icon: FlagIcon },
-  { name: 'body', label: 'Body & Recovery', to: '/body', icon: HeartIcon, badge: 'Live' },
-  { name: 'settings', label: 'Settings', to: '/settings', icon: Cog6ToothIcon }
+  { name: 'overview', label: 'Übersicht', to: '/overview', icon: SparklesIcon },
+  { name: 'progress', label: 'Fortschritt', to: '/progress', icon: ChartBarIcon },
+  { name: 'lifetime', label: 'Lebensleistung', to: '/lifetime', icon: ClockIcon },
+  { name: 'challenges', label: 'Herausforderungen', to: '/challenges', icon: FlagIcon },
+  { name: 'body', label: 'Körper & Regeneration', to: '/body', icon: HeartIcon, badge: 'Live' },
+  { name: 'settings', label: 'Einstellungen', to: '/settings', icon: Cog6ToothIcon }
 ];
 
 const handleLogout = () => {

@@ -5,7 +5,7 @@
         <div>
           <p class="text-sm uppercase tracking-[0.4em] text-white/50">Health Dashboard</p>
           <h1 class="mt-4 text-4xl font-display font-semibold leading-tight">
-            {{ isLogin ? 'Welcome back.' : 'Create your orbit.' }}
+            {{ isLogin ? 'Willkommen zurück.' : 'Starte deine Umlaufbahn.' }}
           </h1>
           <p class="mt-3 text-white/60">
             Verbinde Home Assistant in wenigen Sekunden, importiere History und erhalte ein persönliches Performance Cockpit.
@@ -19,7 +19,7 @@
               type="email"
               required
               class="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/30 focus:border-aurora focus:outline-none"
-              placeholder="you@example.com"
+              placeholder="du@example.com"
             />
           </div>
           <div v-if="!isLogin">
@@ -29,7 +29,7 @@
               type="text"
               required
               class="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/30 focus:border-aurora focus:outline-none"
-              placeholder="Athlete"
+              placeholder="Athlet/in"
             />
           </div>
           <div>
@@ -61,8 +61,8 @@
       </div>
       <div class="hidden lg:flex flex-col justify-between bg-[radial-gradient(circle_at_top,#1a2b63,#090f24)] p-14">
         <div>
-          <p class="text-xs uppercase tracking-[0.5em] text-white/50">LIVE SYNC</p>
-          <h2 class="mt-4 text-3xl font-display">Home Assistant + Lifetime Insights</h2>
+          <p class="text-xs uppercase tracking-[0.5em] text-white/50">LIVE-SYNC</p>
+          <h2 class="mt-4 text-3xl font-display">Home Assistant + Lebensleistung</h2>
           <p class="mt-3 text-white/70">
             Automatische Aggregation, Heatmaps, Body Tracking und persönliche Streak-Algorithmen.
           </p>
@@ -70,7 +70,7 @@
         <div class="rounded-3xl border border-white/10 bg-white/5 p-6 space-y-4">
           <div class="flex justify-between text-xs tracking-widest text-white/50">
             <span>LETZTER IMPORT</span>
-            <span>Realtime</span>
+            <span>LIVE</span>
           </div>
           <div class="h-36 w-full rounded-2xl bg-gradient-to-br from-aurora/30 via-transparent to-pulse/20 flex items-center justify-center text-5xl font-display">
             84%

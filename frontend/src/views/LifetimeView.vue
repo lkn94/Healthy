@@ -2,27 +2,27 @@
   <section class="space-y-8">
     <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
       <KpiCard>
-        <template #label>Total Steps</template>
+        <template #label>Gesamt Schritte</template>
         {{ stats.totalSteps.toLocaleString('de-DE') }}
         <template #description>{{ stats.daysTracked }} Tage dokumentiert</template>
       </KpiCard>
       <KpiCard>
-        <template #label>Total KM</template>
+        <template #label>Gesamt Kilometer</template>
         {{ stats.totalKm.toFixed(1) }} km
         <template #description>Distanz seit Start</template>
       </KpiCard>
       <KpiCard>
-        <template #label>Best Day</template>
+        <template #label>Bester Tag</template>
         {{ stats.bestDaySteps }}
       </KpiCard>
       <KpiCard>
-        <template #label>Longest Streak</template>
+        <template #label>Längste Serie</template>
         {{ stats.longestStreak }} Tage
       </KpiCard>
     </div>
 
     <div class="rounded-3xl border border-white/10 bg-white/5 p-6">
-      <h3 class="text-xl font-display">Roadmap</h3>
+      <h3 class="text-xl font-display">Meilensteine</h3>
       <div class="mt-6 space-y-4">
         <div v-for="milestone in milestones" :key="milestone.title" class="flex items-center gap-4">
           <div class="h-10 w-10 rounded-2xl bg-aurora/20 text-aurora flex items-center justify-center font-display">
@@ -37,8 +37,8 @@
     </div>
 
     <div class="rounded-3xl border border-white/10 bg-gradient-to-br from-aurora/10 to-pulse/5 p-6">
-      <h3 class="text-xl font-display">Fun Facts</h3>
-      <p class="text-white/60">Weil Zahlen mehr Spaß machen, wenn man sie sich vorstellen kann.</p>
+      <h3 class="text-xl font-display">Wissenswerte Fakten</h3>
+      <p class="text-white/60">Zahlen machen mehr Spaß, wenn man sie sich vorstellen kann.</p>
       <div class="mt-6 grid gap-4 md:grid-cols-2">
         <div v-for="fact in funFacts" :key="fact.title" class="rounded-2xl border border-white/10 bg-black/20 p-4">
           <p class="text-xs uppercase tracking-[0.4em] text-white/50">{{ fact.title }}</p>
@@ -64,9 +64,9 @@ onMounted(() => {
 const stats = computed(() => store.lifetimeStats);
 
 const milestones = computed(() => [
-  { title: 'Next Badge', icon: 'A', value: stats.value.totalSteps >= 100000 ? 'Legend' : '100k Steps' },
-  { title: 'Series', icon: 'S', value: `${stats.value.longestStreak} Tage` },
-  { title: 'Focus', icon: 'F', value: `${stats.value.bestWeekSteps} Schritte/Woche` }
+  { title: 'Nächstes Abzeichen', icon: 'A', value: stats.value.totalSteps >= 100000 ? 'Legende' : '100k Schritte' },
+  { title: 'Serienfokus', icon: 'S', value: `${stats.value.longestStreak} Tage` },
+  { title: 'Wochenrekord', icon: 'F', value: `${stats.value.bestWeekSteps} Schritte/Woche` }
 ]);
 
 const funFacts = computed(() => {
@@ -82,17 +82,17 @@ const funFacts = computed(() => {
 
   return [
     {
-      title: 'Earth Orbits',
+      title: 'Erdumrundungen',
       value: `${lapsAroundEarth >= 1 ? lapsAroundEarth.toFixed(2) : (lapsAroundEarth * 1000).toFixed(0)}${lapsAroundEarth >= 1 ? '' : '‰'}`,
       description:
         lapsAroundEarth >= 1
-          ? 'So oft hast du die Erdkugel umrundet.'
+          ? 'So oft bist du rechnerisch um die Erde gelaufen.'
           : 'Du bist auf dem Weg zur ersten Erdumrundung.'
     },
     {
-      title: 'Trips to Moon',
+      title: 'Reisen zum Mond',
       value: `${tripsToMoon.toFixed(3)}`,
-      description: 'Distanz zum Mond (hinwärts) basierend auf deinen Kilometern.'
+      description: 'Distanz bis zum Mond (einfach), basierend auf deinen Kilometern.'
     },
     {
       title: 'Marathons',
@@ -100,9 +100,9 @@ const funFacts = computed(() => {
       description: 'Virtuelle Marathonläufe dank deiner Schritte.'
     },
     {
-      title: 'Goal Days',
+      title: 'Zieltage',
       value: `${Math.floor(goalDays)}`,
-      description: 'So viele 10k-Goal-Tage stecken in deiner Lebensleistung.'
+      description: 'So viele 10k-Schritt-Tage stecken in deiner Lebensleistung.'
     }
   ];
 });

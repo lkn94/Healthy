@@ -2,7 +2,7 @@
   <section class="space-y-8">
     <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
       <KpiCard>
-        <template #label>Steps Today</template>
+        <template #label>Schritte heute</template>
         {{ overview?.today.steps ?? 0 }}
         <template #description>
           Ziel {{ overview?.today.goal }} | Ø7 {{ overview?.today.average7 }}
@@ -19,16 +19,16 @@
         <template #description>{{ overview?.lifetime.daysTracked ?? 0 }} Tage Tracking</template>
       </KpiCard>
       <KpiCard>
-        <template #label>Streak</template>
+        <template #label>Serie</template>
         {{ overview?.lifetime.currentStreak ?? 0 }}
-        <template #description>Longest {{ overview?.lifetime.longestStreak ?? 0 }} Tage</template>
+        <template #description>Längste Serie {{ overview?.lifetime.longestStreak ?? 0 }} Tage</template>
       </KpiCard>
     </div>
 
     <div class="grid gap-6 lg:grid-cols-3">
       <div class="lg:col-span-2 rounded-3xl border border-white/10 bg-white/5 p-6">
         <div class="flex items-center justify-between text-sm text-white/60">
-          <span>Weekly Trajectory</span>
+          <span>Wochenverlauf</span>
           <div class="flex items-center gap-2 text-xs uppercase tracking-[0.4em] text-white/40">
             {{ weeklyTotal }} steps
           </div>
@@ -37,7 +37,7 @@
       </div>
       <div class="rounded-3xl border border-white/10 bg-gradient-to-br from-aurora/20 to-pulse/10 p-6 space-y-4">
         <div class="flex items-center justify-between text-xs uppercase tracking-[0.4em] text-white/60">
-          <span>Momentum</span>
+          <span>Dynamik</span>
           <span>{{ momentumLabel }}</span>
         </div>
         <div class="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
@@ -55,7 +55,7 @@
           </div>
         </div>
         <p class="text-sm text-white/70">
-          Momentum zeigt, wie deine heutigen Schritte im Vergleich zum persönlichen 7- bzw. 30-Tage-Schnitt stehen. Grün bedeutet über dem Trend, Rosa darunter.
+          Dynamik zeigt, wie deine heutigen Schritte im Vergleich zum persönlichen 7- bzw. 30-Tage-Schnitt stehen. Grün bedeutet über dem Trend, Rosa darunter.
         </p>
       </div>
     </div>
@@ -122,6 +122,6 @@ const momentumLabel = computed(() => {
   const { steps, average7 } = overview.value.today;
   if (average7 === 0) return '100%';
   const ratio = Math.round((steps / average7) * 100);
-  return `${ratio}% vs 7d`;
+  return `${ratio}% vs. 7-Tage-Schnitt`;
 });
 </script>
