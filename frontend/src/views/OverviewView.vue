@@ -37,25 +37,31 @@
       </div>
       <div class="rounded-3xl border border-white/10 bg-gradient-to-br from-aurora/20 to-pulse/10 p-6 space-y-4">
         <div class="flex items-center justify-between text-xs uppercase tracking-[0.4em] text-white/60">
-          <span>Dynamik</span>
-          <span>{{ momentumLabel }}</span>
+          <span>Tagesziel</span>
+          <span>{{ dailyTarget?.target.toLocaleString('de-DE') ?? '-' }} Schritte</span>
         </div>
-        <div class="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
+        <div class="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm space-y-3">
           <div class="flex items-center justify-between text-white/80">
             <span>Heute</span>
-            <span>{{ overview?.today.steps.toLocaleString('de-DE') ?? 0 }} Schritte</span>
+            <span>{{ overview?.today.steps.toLocaleString('de-DE') ?? 0 }}</span>
           </div>
-          <div class="flex items-center justify-between text-white/60 mt-2">
+          <div class="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+            <div
+              class="h-full bg-aurora transition-all"
+              :style="{ width: targetProgress + '%' }"
+            ></div>
+          </div>
+          <div class="flex items-center justify-between text-white/60">
             <span>Ø letzte 7 Tage</span>
             <span>{{ overview?.today.average7.toLocaleString('de-DE') ?? 0 }}</span>
           </div>
-          <div class="flex items-center justify-between text-white/60 mt-2">
-            <span>Ø letzte 30 Tage</span>
-            <span>{{ overview?.today.average30.toLocaleString('de-DE') ?? 0 }}</span>
+          <div class="flex items-center justify-between text-white/60">
+            <span>Ziel erreicht (7 Tage)</span>
+            <span>{{ dailyTarget?.achievedDays ?? 0 }}/7</span>
           </div>
         </div>
         <p class="text-sm text-white/70">
-          Dynamik zeigt, wie deine heutigen Schritte im Vergleich zum persönlichen 7- bzw. 30-Tage-Schnitt stehen. Grün bedeutet über dem Trend, Rosa darunter.
+          {{ dailyTarget?.message ?? 'Wir passen dein Ziel automatisch an deine Leistung an.' }}
         </p>
       </div>
     </div>
@@ -75,6 +81,7 @@ onMounted(() => {
 });
 
 const overview = computed(() => dashboard.overview);
+const dailyTarget = computed(() => overview.value?.dailyTarget);
 
 const weeklyChart = computed(() => ({
   grid: { left: 10, right: 10, top: 30, bottom: 0, containLabel: true },
@@ -117,11 +124,11 @@ const weeklyChart = computed(() => ({
 
 const weeklyTotal = computed(() => overview.value?.weekly.reduce((sum, day) => sum + day.steps, 0) ?? 0);
 
-const momentumLabel = computed(() => {
-  if (!overview.value) return '0%';
-  const { steps, average7 } = overview.value.today;
-  if (average7 === 0) return '100%';
-  const ratio = Math.round((steps / average7) * 100);
-  return `${ratio}% vs. 7-Tage-Schnitt`;
+const targetProgress = computed(() => {
+  if (!overview.value || !overview.value.dailyTarget) return 0;
+  const { steps } = overview.value.today;
+  const { target } = overview.value.dailyTarget;
+  if (!target) return 0;
+  return Math.min(100, Math.round((steps / target) * 100));
 });
 </script>

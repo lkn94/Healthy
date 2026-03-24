@@ -41,6 +41,12 @@ export interface OverviewResponse {
   };
   weekly: { date: string; steps: number }[];
   lifetime: LifetimeStatDTO;
+  dailyTarget: {
+    target: number;
+    recentAverage: number;
+    achievedDays: number;
+    message: string;
+  };
 }
 
 export interface ProgressResponse {

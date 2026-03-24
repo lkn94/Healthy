@@ -59,6 +59,46 @@ const aggregateSnapshots = (snapshots: AggregatedDay[]): AggregatedDay[] => {
     .sort((a, b) => a.date.getTime() - b.date.getTime());
 };
 
+const computeAdaptiveGoal = (days: AggregatedDay[]) => {
+  if (!days.length) {
+    return {
+      target: env.DEFAULT_DAILY_GOAL,
+      recentAverage: env.DEFAULT_DAILY_GOAL,
+      achievedDays: 0,
+      message: 'Starte heute mit deinem Standardziel von 10.000 Schritten.'
+    };
+  }
+
+  const sorted = [...days].sort((a, b) => a.date.getTime() - b.date.getTime());
+  const recentWindow = sorted.slice(-7);
+  const avg = recentWindow.reduce((sum, day) => sum + day.steps, 0) / recentWindow.length;
+
+  const upperCap = 20000;
+  let target = env.DEFAULT_DAILY_GOAL;
+
+  if (avg > env.DEFAULT_DAILY_GOAL) {
+    target = Math.min(upperCap, Math.round((avg * 1.05) / 100) * 100);
+  } else if (avg < env.DEFAULT_DAILY_GOAL * 0.8) {
+    target = Math.max(5000, Math.round(((avg * 0.9 + env.DEFAULT_DAILY_GOAL) / 2) / 100) * 100);
+  }
+
+  const achievedDays = recentWindow.filter((day) => day.steps >= target).length;
+
+  let message = 'Neues Ziel, neuer Fokus – bleib dran!';
+  if (achievedDays >= 5) {
+    message = 'Du triffst dein Ziel konstant, deshalb pushen wir es leicht nach oben.';
+  } else if (achievedDays <= 2) {
+    message = 'Wir justieren dein Ziel behutsam, damit es erreichbar bleibt.';
+  }
+
+  return {
+    target,
+    recentAverage: Math.round(avg),
+    achievedDays,
+    message
+  };
+};
+
 export default async function dashboardRoutes(app: FastifyInstance) {
   const getUserId = (request: FastifyRequest) => request.user.id;
 
@@ -119,6 +159,8 @@ export default async function dashboardRoutes(app: FastifyInstance) {
       };
     });
 
+    const adaptiveGoal = computeAdaptiveGoal(days);
+
     return {
       today: {
         steps: todayEntry?.steps ?? 0,
@@ -127,7 +169,8 @@ export default async function dashboardRoutes(app: FastifyInstance) {
         average30: average(30)
       },
       weekly: weekDays,
-      lifetime: stats
+      lifetime: stats,
+      dailyTarget: adaptiveGoal
     };
   });
 
