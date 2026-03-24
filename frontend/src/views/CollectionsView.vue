@@ -188,10 +188,9 @@ const requirementText = (module: (typeof collections.value.inventory)[number]) =
 }
 
 .blueprint-plan {
-  min-height: 360px;
   display: grid;
-  grid-template-columns: repeat(3, minmax(140px, 1fr));
-  grid-template-rows: repeat(2, 160px);
+  grid-template-columns: repeat(3, minmax(160px, 1fr));
+  grid-auto-rows: minmax(180px, auto);
   grid-template-areas:
     'base living climate'
     'security automation ai';
@@ -256,7 +255,6 @@ const requirementText = (module: (typeof collections.value.inventory)[number]) =
       'base living'
       'climate security'
       'automation ai';
-    grid-template-rows: repeat(3, 160px);
   }
 }
 </style>
