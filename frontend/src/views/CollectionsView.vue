@@ -72,9 +72,15 @@
               <CollectionProgress label="Automation" :value="slot.module.progress.automation" />
               <CollectionProgress label="KI" :value="slot.module.progress.ai" />
             </div>
-            <p class="text-[11px] text-white/60" v-if="slot.module && !slot.module.unlocked">
-              Noch {{ remainingText(slot.module) }}
-            </p>
+            <div v-if="slot.module && !slot.module.unlocked" class="mt-2">
+              <div class="w-full h-2.5 rounded-full bg-white/10 overflow-hidden">
+                <div
+                  class="h-full bg-gradient-to-r from-aurora to-pulse"
+                  :style="{ width: Math.min(100, Math.round(moduleOverallProgress(slot.module) * 100)) + '%' }"
+                ></div>
+              </div>
+              <p class="text-[11px] text-white/60 mt-1">Noch {{ remainingText(slot.module) }}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -159,6 +165,11 @@ const remainingText = (module: (typeof collections.value.inventory)[number]) => 
   if (autoShort > 0) parts.push(`${autoShort} Automation`);
   if (aiShort > 0) parts.push(`${aiShort} KI`);
   return parts.join(' • ');
+};
+
+const moduleOverallProgress = (module: (typeof collections.value.inventory)[number]) => {
+  const values = [module.progress.energy, module.progress.automation, module.progress.ai];
+  return Math.min(...values);
 };
 </script>
 
