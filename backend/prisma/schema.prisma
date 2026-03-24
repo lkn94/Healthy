@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DB_URL")
+}
+
+model User {
+  id           String                    @id @default(cuid())
+  email        String                    @unique
+  passwordHash String
+  displayName  String
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+  connections  HomeAssistantConnection[]
+  snapshots    DailyHealthSnapshot[]
+}
+
+model HomeAssistantConnection {
+  id                   String               @id @default(cuid())
+  userId               String
+  user                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                 String
+  baseUrl              String
+  accessTokenEncrypted String
+  status               String               @default("idle")
+  lastSyncAt           DateTime?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  mapping              SensorMapping?
+  snapshots            DailyHealthSnapshot[]
+  lifetimeStat         LifetimeStat?
+  syncJobs             SyncJob[]
+}
+
+model SensorMapping {
+  id                    String                  @id @default(cuid())
+  connectionId          String                  @unique
+  connection            HomeAssistantConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  stepsEntityId         String
+  weightEntityId        String?
+  distanceEntityId      String?
+  activeMinutesEntityId String?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+}
+
+model DailyHealthSnapshot {
+  id           String                  @id @default(cuid())
+  userId       String
+  connectionId String
+  user         User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connection   HomeAssistantConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  date         DateTime
+  steps        Int
+  weight       Float?
+  distanceKm   Float?
+  activeMinutes Int?
+  source       String
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+
+  @@unique([userId, connectionId, date])
+  @@index([connectionId, date])
+}
+
+model LifetimeStat {
+  id             String                  @id @default(cuid())
+  connectionId   String                  @unique
+  connection     HomeAssistantConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  totalSteps     Int                     @default(0)
+  totalKm        Float                   @default(0)
+  bestDaySteps   Int                     @default(0)
+  bestWeekSteps  Int                     @default(0)
+  currentStreak  Int                     @default(0)
+  longestStreak  Int                     @default(0)
+  daysTracked    Int                     @default(0)
+  updatedAt      DateTime                @updatedAt
+}
+
+model SyncJob {
+  id           String                  @id @default(cuid())
+  connectionId String
+  connection   HomeAssistantConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  type         String
+  status       String                   @default("PENDING")
+  startedAt    DateTime                 @default(now())
+  finishedAt   DateTime?
+  importedDays Int                      @default(0)
+  errorMessage String?
+}
