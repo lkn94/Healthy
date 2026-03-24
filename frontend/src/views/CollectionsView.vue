@@ -67,6 +67,11 @@
               </div>
             </div>
             <p class="text-[11px] text-white/70" v-if="slot.module?.story && slot.module?.unlocked">{{ slot.module.story }}</p>
+            <p v-if="slot.module" class="text-[11px] text-white/60">
+              Bedarf: {{ slot.module.requiredEnergy.toLocaleString('de-DE') }} Energie •
+              {{ slot.module.requiredAutomation }} Automation •
+              {{ slot.module.requiredAI }} KI
+            </p>
             <div class="mt-2 space-y-1 text-[11px]" v-if="slot.module">
               <CollectionProgress label="Energie" :value="slot.module.progress.energy" />
               <CollectionProgress label="Automation" :value="slot.module.progress.automation" />
