@@ -37,8 +37,8 @@
           </p>
         </div>
         <p class="text-sm text-white/70">
-          Jede Bewegung zählt – verbrannte Kalorien entsprechen deinem Lieblingsessen. Heute hast du dir
-          {{ (calories?.today?.mealEquivalent?.label ?? 'eine Mahlzeit').toLowerCase() }} erlaufen.
+          Jede Bewegung zählt – dein Verbrauch heute entspricht ungefähr
+          {{ (calories?.today?.mealEquivalent?.label ?? 'einer Mahlzeit').toLowerCase() }}.
         </p>
       </div>
     </div>
