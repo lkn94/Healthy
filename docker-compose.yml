@@ -6,5 +6,9 @@ services:
     env_file:
       - .env
     volumes:
-      - ./data:/app/data
+      - healthy_app_data:/data
     restart: unless-stopped
+
+volumes:
+  healthy_app_data:
+    driver: local
