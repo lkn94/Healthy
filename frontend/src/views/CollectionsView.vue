@@ -76,7 +76,7 @@
               <div class="w-full h-2.5 rounded-full bg-white/10 overflow-hidden">
                 <div
                   class="h-full bg-gradient-to-r from-aurora to-pulse"
-                  :style="{ width: Math.min(100, Math.round(moduleOverallProgress(slot.module) * 100)) + '%' }"
+                  :style="{ width: Math.max(1, Math.round(moduleOverallProgress(slot.module) * 100)) + '%' }"
                 ></div>
               </div>
               <p class="text-[11px] text-white/60 mt-1">Noch {{ remainingText(slot.module) }}</p>
