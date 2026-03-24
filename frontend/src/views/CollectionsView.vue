@@ -5,6 +5,10 @@
         <p class="text-xs uppercase tracking-[0.4em] text-white/60">SmartHome Genesis</p>
         <h2 class="text-3xl font-display">{{ heroTitle }}</h2>
         <p class="text-white/70">{{ heroMessage }}</p>
+        <p class="text-xs text-white/50">
+          Energie entsteht durch Schritte, Automation durch Tages-Challenges und KI-Punkte über große Lifetime-Meilensteine.
+          Jede neue Stufe schaltet sichtbare Module in deinem virtuellen Zuhause frei.
+        </p>
         <div class="grid grid-cols-3 gap-4 text-center">
           <div class="rounded-2xl border border-white/10 bg-black/20 p-3">
             <p class="text-xs uppercase tracking-[0.4em] text-white/60">Energie</p>
@@ -39,33 +43,57 @@
       <p class="text-white/60 text-sm">Jedes Modul benötigt eine Kombination dieser Punkte. Sobald der Fortschrittsbalken voll ist, wird es freigeschaltet.</p>
     </div>
 
-    <div class="grid gap-6 md:grid-cols-2">
-      <div
-        v-for="module in collections.inventory"
-        :key="module.id"
-        class="rounded-3xl border border-white/10 p-5 space-y-3 transition shadow-lg"
-        :class="module.unlocked ? 'bg-aurora/15 border-aurora/30' : 'bg-white/5'"
-      >
-        <div class="flex items-center gap-3">
-          <div class="h-12 w-12 rounded-2xl bg-black/30 flex items-center justify-center text-2xl">
-            {{ module.icon ?? '🏠' }}
+    <div class="rounded-3xl border border-white/10 bg-white/5 p-6 space-y-4">
+      <h3 class="text-xl font-display">Blueprint</h3>
+      <p class="text-white/60 text-sm">
+        Dein SmartHome füllt sich Modul für Modul. Freigeschaltete Räume leuchten, gesperrte Räume zeigen, was noch fehlt.
+      </p>
+      <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div
+          v-for="module in collections.inventory"
+          :key="module.id + '-blueprint'"
+          class="rounded-2xl border p-4 blueprint-tile relative overflow-hidden"
+          :class="module.unlocked ? 'border-aurora/50 bg-aurora/10 blueprint-active' : 'border-white/10 bg-black/10 blueprint-locked'"
+        >
+          <div class="absolute inset-0 pointer-events-none blueprint-grid"></div>
+          <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-xl bg-black/30 flex items-center justify-center text-2xl">
+              {{ module.icon ?? '🏠' }}
+            </div>
+            <div>
+              <p class="text-xs uppercase tracking-[0.3em]" :class="module.unlocked ? 'text-aurora' : 'text-white/50'">
+                {{ module.unlocked ? 'Aktiv' : 'Geplant' }}
+              </p>
+              <p class="text-white font-display">{{ module.title }}</p>
+            </div>
           </div>
-          <div>
-            <p class="text-sm text-white/60">{{ module.unlocked ? 'Aktiv' : 'In Arbeit' }}</p>
-            <h3 class="text-xl font-display">{{ module.title }}</h3>
+          <p class="text-white/70 text-xs mt-2">{{ module.description }}</p>
+          <p v-if="module.story && module.unlocked" class="text-aurora/80 text-xs mt-1">{{ module.story }}</p>
+          <div class="mt-3 space-y-1 text-[11px] text-white/60">
+            <CollectionProgress label="Energie" :value="module.progress.energy" />
+            <CollectionProgress label="Automation" :value="module.progress.automation" />
+            <CollectionProgress label="KI" :value="module.progress.ai" />
           </div>
+          <p v-if="!module.unlocked" class="text-[11px] text-white/60 mt-2">
+            Noch {{ remainingText(module) }} bis zur Aktivierung.
+          </p>
         </div>
-        <p class="text-white/70 text-sm">{{ module.description }}</p>
-        <p v-if="module.story && module.unlocked" class="text-aurora text-sm">{{ module.story }}</p>
-        <div class="space-y-2 text-xs text-white/60">
-          <CollectionProgress label="Energie" :value="module.progress.energy" />
-          <CollectionProgress label="Automation" :value="module.progress.automation" />
-          <CollectionProgress label="KI" :value="module.progress.ai" />
-        </div>
-        <p v-if="!module.unlocked" class="text-xs text-white/60">
-          Noch {{ remainingText(module) }} bis zur Aktivierung.
-        </p>
       </div>
+    </div>
+
+    <div class="rounded-3xl border border-white/10 bg-white/5 p-6" v-if="nextModule">
+      <h3 class="text-xl font-display">Nächster Raum entsteht</h3>
+      <p class="text-white/60 text-sm">
+        Sobald du genug Punkte hast, baut EVA {{ nextModule.title }} und bringt neue Funktionen wie:
+      </p>
+      <ul class="list-disc list-inside text-white/70 text-sm mt-3">
+        <li v-if="nextModule.key === 'smart-lighting'">Adaptives Licht passend zu Tageszeit.</li>
+        <li v-else-if="nextModule.key === 'climate-core'">Auto-Klima mit Luftqualitäts-Checks.</li>
+        <li v-else-if="nextModule.key === 'security-hub'">Smarte Sicherheits-Sensorik.</li>
+        <li v-else-if="nextModule.key === 'automation-brain'">Predictive Routinen für Alltag.</li>
+        <li v-else-if="nextModule.key === 'ai-companion'">KI-Companion liefert persönliche Insights.</li>
+        <li v-else>Neue SmartHome-Funktionalität.</li>
+      </ul>
     </div>
   </section>
 </template>
@@ -123,3 +151,24 @@ const remainingText = (module: (typeof collections.value.inventory)[number]) => 
   return parts.join(' • ');
 };
 </script>
+
+<style scoped>
+.blueprint-tile {
+  position: relative;
+}
+.blueprint-grid::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-size: 24px 24px;
+  background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+  opacity: 0.6;
+}
+.blueprint-active {
+  box-shadow: 0 10px 30px rgba(55, 242, 192, 0.2);
+}
+.blueprint-locked {
+  opacity: 0.85;
+}
+</style>
