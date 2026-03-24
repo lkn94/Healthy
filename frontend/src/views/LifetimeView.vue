@@ -70,7 +70,7 @@ const milestones = computed(() => [
 ]);
 
 const funFacts = computed(() => {
-  const earthCircumferenceKm = 40075;
+  const earthCircumferenceKm = 40_075;
   const moonDistanceKm = 384_400;
   const marathonKm = 42.195;
   const avgDailyGoal = 10_000;
@@ -79,30 +79,43 @@ const funFacts = computed(() => {
   const tripsToMoon = stats.value.totalKm / moonDistanceKm;
   const marathons = stats.value.totalKm / marathonKm;
   const goalDays = stats.value.totalSteps / avgDailyGoal;
+  const avgStepsPerDay = stats.value.daysTracked
+    ? Math.round(stats.value.totalSteps / stats.value.daysTracked)
+    : 0;
+  const avgKmPerDay = stats.value.daysTracked
+    ? (stats.value.totalKm / stats.value.daysTracked).toFixed(2)
+    : '0.00';
 
   return [
     {
       title: 'Erdumrundungen',
-      value: `${lapsAroundEarth >= 1 ? lapsAroundEarth.toFixed(2) : (lapsAroundEarth * 1000).toFixed(0)}${lapsAroundEarth >= 1 ? '' : '‰'}`,
-      description:
-        lapsAroundEarth >= 1
-          ? 'So oft bist du rechnerisch um die Erde gelaufen.'
-          : 'Du bist auf dem Weg zur ersten Erdumrundung.'
+      value: `${lapsAroundEarth.toFixed(2)}×`,
+      description: '1 Runde entspricht ca. 40.075 km – du hast bereits einen guten Anteil geschafft.'
     },
     {
       title: 'Reisen zum Mond',
-      value: `${tripsToMoon.toFixed(3)}`,
-      description: 'Distanz bis zum Mond (einfach), basierend auf deinen Kilometern.'
+      value: `${tripsToMoon.toFixed(3)}×`,
+      description: 'Distanz bis zum Mond (Hinweg) basierend auf deiner bisherigen Strecke.'
     },
     {
-      title: 'Marathons',
-      value: `${Math.floor(marathons)}`,
-      description: 'Virtuelle Marathonläufe dank deiner Schritte.'
+      title: 'Marathonläufe',
+      value: `${Math.max(1, Math.floor(marathons)).toLocaleString('de-DE')}×`,
+      description: 'Ein Marathon sind 42,2 km – so viele davon hast du virtuell gesammelt.'
     },
     {
-      title: 'Zieltage',
-      value: `${Math.floor(goalDays)}`,
-      description: 'So viele 10k-Schritt-Tage stecken in deiner Lebensleistung.'
+      title: '10k-Zieltage',
+      value: `${Math.floor(goalDays).toLocaleString('de-DE')}`,
+      description: 'So oft entsprechen deine Schritte dem Ziel von 10.000 Schritten.'
+    },
+    {
+      title: 'Durchschnitt Schritte/Tag',
+      value: avgStepsPerDay.toLocaleString('de-DE'),
+      description: 'Dein persönlicher Tagesdurchschnitt über alle getrackten Tage.'
+    },
+    {
+      title: 'Kilometer pro Tag',
+      value: `${avgKmPerDay} km`,
+      description: 'Im Mittel so viele Kilometer gehst du pro Tag.'
     }
   ];
 });
