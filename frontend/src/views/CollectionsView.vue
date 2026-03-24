@@ -188,7 +188,7 @@ const requirementText = (module: (typeof collections.value.inventory)[number]) =
 }
 
 .blueprint-plan {
-  min-height: 320px;
+  min-height: 360px;
   display: grid;
   grid-template-columns: repeat(3, minmax(140px, 1fr));
   grid-template-rows: repeat(2, 160px);
@@ -214,12 +214,12 @@ const requirementText = (module: (typeof collections.value.inventory)[number]) =
 .blueprint-room {
   position: relative;
   border-radius: 18px;
-  padding: 14px;
+  padding: 16px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .blueprint-room.room-active {
