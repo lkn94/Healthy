@@ -98,3 +98,12 @@ export interface CaloriesResponse {
   };
   references: { id: string; label: string; calories: number }[];
 }
+
+export interface DailyChallengeDTO {
+  id: string;
+  label: string;
+  level: number;
+  target: number;
+  currentValue: number;
+  completed: boolean;
+}

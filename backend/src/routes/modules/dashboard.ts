@@ -335,9 +335,9 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     };
   });
 
-  const challengeDefinitions = [
-    {
-      id: 'steps-100k',
+const challengeDefinitions = [
+  {
+    id: 'steps-100k',
       title: '100k Pioneer',
       description: 'Erreiche 100.000 Schritte insgesamt.',
       criteria: { totalSteps: 100_000 }
@@ -365,12 +365,26 @@ export default async function dashboardRoutes(app: FastifyInstance) {
       title: 'Weekly Legend',
       description: 'Eine Woche mit mindestens 90.000 Schritten.',
       criteria: { bestWeekSteps: 90_000 }
-    }
-  ];
+  }
+];
+
+const dailyChallengeLevels = [
+  { id: 'steps-day', label: 'Tagessteps', base: 8000, increment: 2000 },
+  { id: 'calories-day', label: 'Kalorienverbrennung', base: 500, increment: 200 }
+];
 
   app.get('/challenges', { preHandler: [app.authenticate] }, async (request) => {
     const userId = getUserId(request);
     const stats = await loadLifetimeStats(userId);
+    const today = startOfDay(new Date());
+    const days = await loadAggregatedDays(userId);
+    const todayEntry = days.find((day) => isSameDay(day.date, today));
+    const todayCalories = todayEntry?.calories ?? 0;
+    const todaySteps = todayEntry?.steps ?? 0;
+
+    const dailyProgress = await app.prisma.dailyChallengeProgress.findMany({
+      where: { userId, date: today }
+    });
 
     const challenges = challengeDefinitions.map((challenge) => {
       const unlocked = Object.entries(challenge.criteria).every(([key, value]) => {
@@ -392,5 +406,36 @@ export default async function dashboardRoutes(app: FastifyInstance) {
     });
 
     return { challenges };
+  });
+
+  app.get('/challenges/daily', { preHandler: [app.authenticate] }, async (request) => {
+    const userId = getUserId(request);
+    const today = startOfDay(new Date());
+    const days = await loadAggregatedDays(userId);
+    const todayEntry = days.find((day) => isSameDay(day.date, today));
+    const todaySteps = todayEntry?.steps ?? 0;
+    const todayCalories = todayEntry?.calories ?? 0;
+
+    const progress = await app.prisma.dailyChallengeProgress.findMany({
+      where: { userId, date: today }
+    });
+
+    const daily = dailyChallengeLevels.map((challenge) => {
+      const previous = progress.find((p) => p.challengeId === challenge.id);
+      const currentLevel = previous?.level ?? 0;
+      const target = challenge.base + challenge.increment * currentLevel;
+      const currentValue = challenge.id === 'steps-day' ? todaySteps : todayCalories;
+      const completed = currentValue >= target;
+      return {
+        id: challenge.id,
+        label: challenge.label,
+        level: currentLevel,
+        target,
+        currentValue,
+        completed
+      };
+    });
+
+    return { daily };
   });
 }

@@ -17,6 +17,7 @@ model User {
   updatedAt    DateTime                  @updatedAt
   connections  HomeAssistantConnection[]
   snapshots    DailyHealthSnapshot[]
+  dailyChallenges DailyChallengeProgress[]
 }
 
 model HomeAssistantConnection {
@@ -67,6 +68,20 @@ model DailyHealthSnapshot {
 
   @@unique([userId, connectionId, date])
   @@index([connectionId, date])
+}
+
+model DailyChallengeProgress {
+  id             String   @id @default(cuid())
+  userId         String
+  date           DateTime
+  challengeId    String
+  level          Int
+  completedAt    DateTime
+  createdAt      DateTime @default(now())
+
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date, challengeId])
 }
 
 model LifetimeStat {

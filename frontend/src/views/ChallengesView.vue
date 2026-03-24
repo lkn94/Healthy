@@ -43,6 +43,35 @@
         </p>
       </div>
     </div>
+
+    <div class="rounded-3xl border border-white/10 bg-white/5 p-6">
+      <h2 class="text-2xl font-display">Tages-Challenges</h2>
+      <p class="text-white/60">Meistere tägliche Ziele und stufe dich hoch.</p>
+      <div class="mt-6 grid gap-4 md:grid-cols-2">
+        <div
+          v-for="challenge in daily"
+          :key="challenge.id"
+          class="rounded-3xl border border-white/10 bg-black/20 p-5"
+        >
+          <div class="flex items-center justify-between text-sm text-white/60">
+            <span>{{ challenge.label }}</span>
+            <span>Level {{ challenge.level + 1 }}</span>
+          </div>
+          <p class="text-3xl font-display text-white mt-2">
+            {{ challenge.currentValue.toLocaleString('de-DE') }} / {{ challenge.target.toLocaleString('de-DE') }}
+          </p>
+          <div class="w-full h-2 rounded-full bg-white/10 overflow-hidden mt-4">
+            <div
+              class="h-full bg-aurora transition-all"
+              :style="{ width: Math.min(100, Math.round((challenge.currentValue / challenge.target) * 100)) + '%' }"
+            ></div>
+          </div>
+          <p class="text-sm text-white/60 mt-3" v-if="challenge.completed">
+            Ziel für heute erreicht! Morgen wartet Level {{ challenge.level + 2 }}.
+          </p>
+        </div>
+      </div>
+    </div>
   </section>
 </template>
 
@@ -52,10 +81,11 @@ import { storeToRefs } from 'pinia';
 import { useChallengesStore } from '../stores/challenges';
 
 const store = useChallengesStore();
-const { unlocked, locked } = storeToRefs(store);
+const { unlocked, locked, daily } = storeToRefs(store);
 
 onMounted(() => {
   store.fetchChallenges();
+  store.fetchDailyChallenges();
 });
 
 const formatCriteria = (challenge: { criteria: Record<string, number>; progress: Record<string, number> }) => {
