@@ -120,6 +120,8 @@ export interface CollectionModuleDTO {
   key: string;
   title: string;
   description: string;
+  icon?: string | null;
+  story?: string | null;
   requiredEnergy: number;
   requiredAutomation: number;
   requiredAI: number;

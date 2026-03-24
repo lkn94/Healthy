@@ -198,6 +198,8 @@ export default async function dashboardRoutes(app: FastifyInstance) {
         key: module.key,
         title: module.title,
         description: module.description,
+        icon: module.icon,
+        story: module.story,
         requiredEnergy: module.requiredEnergy,
         requiredAutomation: module.requiredAutomation,
         requiredAI: module.requiredAI,

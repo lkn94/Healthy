@@ -10,6 +10,8 @@ const modules = [
     requiredEnergy: 5000,
     requiredAutomation: 0,
     requiredAI: 0,
+    icon: '💡',
+    story: 'Deine Lampen reagieren jetzt dynamisch auf Tageszeit und Stimmung.',
     orderIndex: 1
   },
   {
@@ -19,6 +21,8 @@ const modules = [
     requiredEnergy: 15000,
     requiredAutomation: 0,
     requiredAI: 0,
+    icon: '🌡️',
+    story: 'Die Klima-Zentrale lernt, wann du frische Luft brauchst.',
     orderIndex: 2
   },
   {
@@ -28,6 +32,8 @@ const modules = [
     requiredEnergy: 30000,
     requiredAutomation: 100,
     requiredAI: 0,
+    icon: '🛡️',
+    story: 'Dein Zuhause wacht nun mit smarten Sensoren über dich.',
     orderIndex: 3
   },
   {
@@ -37,6 +43,8 @@ const modules = [
     requiredEnergy: 60000,
     requiredAutomation: 300,
     requiredAI: 0,
+    icon: '🧠',
+    story: 'Das Automation Brain orchestriert jede Routine millisekundengenau.',
     orderIndex: 4
   },
   {
@@ -46,6 +54,8 @@ const modules = [
     requiredEnergy: 120000,
     requiredAutomation: 600,
     requiredAI: 50,
+    icon: '🤖',
+    story: 'Dein KI-Companion begrüßt dich mit personalisierten Insights.',
     orderIndex: 5
   }
 ];

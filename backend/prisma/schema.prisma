@@ -106,6 +106,8 @@ model CollectionModule {
   requiredEnergy Int
   requiredAutomation Int
   requiredAI     Int
+  icon           String?
+  story          String?
   orderIndex     Int      @default(0)
 }
 
