@@ -3,8 +3,8 @@ services:
     build: .
     ports:
       - "${APP_PORT:-3000}:3000"
-    env_file:
-      - .env
+#    env_file:
+#      - .env
     volumes:
       - healthy_app_data:/data
     restart: unless-stopped
