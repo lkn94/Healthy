@@ -57,6 +57,11 @@ export default async function connectionRoutes(app: FastifyInstance) {
     const userId = getUserId(request);
     const body = connectionBodySchema.parse(request.body);
 
+    const user = await app.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw app.httpErrors.unauthorized('User session invalid');
+    }
+
     const connection = await app.prisma.homeAssistantConnection.create({
       data: {
         userId,
