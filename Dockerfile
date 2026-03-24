@@ -2,6 +2,7 @@
 
 FROM node:20-alpine AS frontend-builder
 WORKDIR /app/frontend
+RUN apk add --no-cache openssl
 COPY frontend/package*.json ./
 RUN npm install
 COPY frontend ./
@@ -9,6 +10,7 @@ RUN npm run build
 
 FROM node:20-alpine AS backend-builder
 WORKDIR /app/backend
+RUN apk add --no-cache openssl
 ENV DB_URL="file:../data/app.db"
 COPY backend/package*.json ./
 RUN npm install
@@ -19,6 +21,7 @@ RUN npm run build
 
 FROM node:20-alpine AS runner
 WORKDIR /app
+RUN apk add --no-cache openssl
 ENV NODE_ENV=production
 COPY --from=backend-builder /app/backend/node_modules ./node_modules
 COPY --from=backend-builder /app/backend/dist ./dist
