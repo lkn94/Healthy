@@ -46,10 +46,26 @@ const weightChart = computed(() => ({
   series: [
     {
       name: 'Gewicht',
-      data: body.value?.trend.map((item) => item.weight ?? null) ?? [],
+      data:
+        body.value?.trend.map((item) => (typeof item.weight === 'number' ? item.weight : undefined)) ?? [],
       type: 'line',
       smooth: true,
-      lineStyle: { color: '#37F2C0', width: 3 }
+      connectNulls: true,
+      showSymbol: false,
+      lineStyle: { color: '#37F2C0', width: 3 },
+      areaStyle: {
+        color: {
+          type: 'linear',
+          x: 0,
+          y: 0,
+          x2: 0,
+          y2: 1,
+          colorStops: [
+            { offset: 0, color: 'rgba(55,242,192,0.25)' },
+            { offset: 1, color: 'rgba(55,242,192,0)' }
+          ]
+        }
+      }
     }
   ]
 }));
