@@ -13,10 +13,11 @@ export const registerSchedulers = (app: FastifyInstance) => {
       if (active) continue;
       const job = await startJob(app.prisma, connection.id, 'SCHEDULED');
       try {
+        const now = new Date();
         const fromDate = connection.lastSyncAt
           ? startOfDay(connection.lastSyncAt)
-          : subDays(startOfDay(new Date()), 1);
-        const toDate = startOfDay(new Date());
+          : subDays(startOfDay(now), 1);
+        const toDate = now;
         const days = await runSyncJob({
           prisma: app.prisma,
           connectionId: connection.id,
@@ -43,8 +44,9 @@ export const registerSchedulers = (app: FastifyInstance) => {
       if (active) continue;
       const job = await startJob(app.prisma, connection.id, 'SCHEDULED');
       try {
-        const toDate = startOfDay(new Date());
-        const fromDate = subDays(toDate, 1);
+        const now = new Date();
+        const toDate = now;
+        const fromDate = subDays(startOfDay(now), 1);
         const days = await runSyncJob({
           prisma: app.prisma,
           connectionId: connection.id,

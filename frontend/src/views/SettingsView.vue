@@ -34,31 +34,43 @@
       <h2 class="text-2xl font-display">Sensor Mapping – {{ selectedConnection.name }}</h2>
       <p class="text-white/60">Wähle passende Entities für Schritte, Gewicht, Distanz und Active Minutes.</p>
       <form class="mt-6 grid gap-4 md:grid-cols-2" @submit.prevent="saveMapping">
+        <label class="md:col-span-2 space-y-2 text-sm text-white/70">
+          <span>Sensoren filtern</span>
+          <input v-model="entitySearch" class="input" placeholder="sensor.schritte oder Name" />
+        </label>
         <label class="space-y-2 text-sm text-white/70">
           <span>Steps Entity</span>
           <select v-model="mapping.stepsEntityId" class="input" required>
-            <option v-for="entity in entityOptions" :key="entity.entity_id" :value="entity.entity_id">{{ entity.entity_id }}</option>
+            <option v-for="entity in filteredEntities" :key="entity.entity_id" :value="entity.entity_id">
+              {{ entityLabel(entity) }}
+            </option>
           </select>
         </label>
         <label class="space-y-2 text-sm text-white/70">
           <span>Weight Entity</span>
           <select v-model="mapping.weightEntityId" class="input">
             <option value="">-</option>
-            <option v-for="entity in entityOptions" :key="entity.entity_id" :value="entity.entity_id">{{ entity.entity_id }}</option>
+            <option v-for="entity in filteredEntities" :key="entity.entity_id" :value="entity.entity_id">
+              {{ entityLabel(entity) }}
+            </option>
           </select>
         </label>
         <label class="space-y-2 text-sm text-white/70">
           <span>Distance Entity</span>
           <select v-model="mapping.distanceEntityId" class="input">
             <option value="">-</option>
-            <option v-for="entity in entityOptions" :key="entity.entity_id" :value="entity.entity_id">{{ entity.entity_id }}</option>
+            <option v-for="entity in filteredEntities" :key="entity.entity_id" :value="entity.entity_id">
+              {{ entityLabel(entity) }}
+            </option>
           </select>
         </label>
         <label class="space-y-2 text-sm text-white/70">
           <span>Active Minutes Entity</span>
           <select v-model="mapping.activeMinutesEntityId" class="input">
             <option value="">-</option>
-            <option v-for="entity in entityOptions" :key="entity.entity_id" :value="entity.entity_id">{{ entity.entity_id }}</option>
+            <option v-for="entity in filteredEntities" :key="entity.entity_id" :value="entity.entity_id">
+              {{ entityLabel(entity) }}
+            </option>
           </select>
         </label>
         <button type="submit" class="md:col-span-2 rounded-2xl bg-gradient-to-r from-aurora to-pulse px-4 py-3 text-midnight font-semibold">Speichern</button>
@@ -93,6 +105,7 @@ const mapping = reactive({
 
 const selectedConnectionId = ref<string | null>(null);
 const entityOptions = ref<HaEntity[]>([]);
+const entitySearch = ref('');
 const importDate = ref<string>('');
 const syncInfo = ref<any>(null);
 
@@ -118,6 +131,7 @@ watch(selectedConnectionId, async (id) => {
     activeMinutesEntityId: conn?.mapping?.activeMinutesEntityId ?? ''
   });
   entityOptions.value = await store.fetchEntities(id);
+  entitySearch.value = '';
 });
 
 const saveMapping = async () => {
@@ -145,6 +159,27 @@ store.fetchConnections();
 const removeConnection = async (id: string) => {
   await store.deleteConnection(id);
 };
+
+const entityLabel = (entity: HaEntity) => {
+  const friendly = (entity.attributes?.friendly_name as string) ?? '';
+  if (friendly && friendly.toLowerCase() !== entity.entity_id.toLowerCase()) {
+    return `${friendly} (${entity.entity_id})`;
+  }
+  return entity.entity_id;
+};
+
+const sortedEntities = computed(() =>
+  [...entityOptions.value].sort((a, b) => a.entity_id.localeCompare(b.entity_id))
+);
+
+const filteredEntities = computed(() => {
+  const term = entitySearch.value.trim().toLowerCase();
+  if (!term) return sortedEntities.value;
+  return sortedEntities.value.filter((entity) => {
+    const label = entityLabel(entity).toLowerCase();
+    return label.includes(term);
+  });
+});
 </script>
 
 <style scoped>

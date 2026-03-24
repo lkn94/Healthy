@@ -121,7 +121,7 @@ export default async function connectionRoutes(app: FastifyInstance) {
     const body = importBodySchema.parse(request.body);
 
     const fromDate = startOfDay(new Date(body.fromDate));
-    const toDate = startOfDay(new Date());
+    const toDate = new Date();
 
     const activeJob = await findActiveJob(app.prisma, id);
     if (activeJob) {
@@ -161,7 +161,7 @@ export default async function connectionRoutes(app: FastifyInstance) {
     const fromDate = connection.lastSyncAt
       ? startOfDay(connection.lastSyncAt)
       : startOfDay(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000));
-    const toDate = startOfDay(new Date());
+    const toDate = new Date();
 
     const activeJob = await findActiveJob(app.prisma, id);
     if (activeJob) {
