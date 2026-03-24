@@ -13,9 +13,16 @@
         <span v-else>×</span>
       </button>
     </div>
+    <transition name="mobile-menu-fade">
+      <div
+        v-if="mobileMenuOpen"
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+        @click="closeMobileMenu"
+      ></div>
+    </transition>
     <aside
-      class="lg:flex w-72 flex-col border-r border-white/5 bg-gradient-to-b from-eclipse/60 to-midnight/80 backdrop-blur-xl"
-      :class="mobileMenuOpen ? 'block' : 'hidden lg:flex'"
+      class="lg:flex w-72 flex-col border-r border-white/5 bg-gradient-to-b from-eclipse/60 to-midnight/80 backdrop-blur-xl transition-transform duration-300 ease-out"
+      :class="mobileMenuOpen ? 'fixed inset-y-0 left-0 z-50 w-[82%] max-w-sm shadow-2xl translate-x-0' : 'hidden -translate-x-full lg:flex lg:translate-x-0'"
     >
       <div class="px-8 py-10">
         <div class="flex items-center gap-3">
@@ -42,6 +49,7 @@
               ? 'bg-white/10 text-white shadow-glow'
               : 'text-white/60 hover:bg-white/5 hover:text-white'
           "
+          @click="handleNavClick"
         >
           <component :is="item.icon" class="h-5 w-5" />
           {{ item.label }}
@@ -97,7 +105,7 @@
 
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { useConnectionsStore } from '../stores/connections';
 import { ChartBarIcon, SparklesIcon, ClockIcon, Cog6ToothIcon, HeartIcon, FlagIcon, FireIcon, BuildingOfficeIcon, TrophyIcon } from '@heroicons/vue/24/outline';
@@ -142,6 +150,25 @@ const toggleMobileMenu = () => {
   mobileMenuOpen.value = !mobileMenuOpen.value;
 };
 
+const closeMobileMenu = () => {
+  mobileMenuOpen.value = false;
+};
+
+const handleNavClick = () => {
+  if (mobileMenuOpen.value) {
+    closeMobileMenu();
+  }
+};
+
+watch(
+  () => route.fullPath,
+  () => {
+    if (mobileMenuOpen.value) {
+      closeMobileMenu();
+    }
+  }
+);
+
 if (!connections.loaded) {
   connections.fetchConnections();
   connections.fetchLifetimeStats();
@@ -149,4 +176,13 @@ if (!connections.loaded) {
 </script>
 
 <style scoped>
+.mobile-menu-fade-enter-active,
+.mobile-menu-fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+
+.mobile-menu-fade-enter-from,
+.mobile-menu-fade-leave-to {
+  opacity: 0;
+}
 </style>
