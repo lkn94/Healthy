@@ -29,6 +29,16 @@
       </div>
     </div>
 
+    <div class="rounded-3xl border border-white/10 bg-white/5 p-6 space-y-3">
+      <h3 class="text-xl font-display">Wie sammle ich Punkte?</h3>
+      <ul class="list-disc list-inside text-white/70 text-sm space-y-1">
+        <li><span class="text-aurora">Energiepunkte</span> entstehen durch jeden Schritt.</li>
+        <li><span class="text-aurora">Automationspunkte</span> gewinnst du über Tages-Challenges.</li>
+        <li><span class="text-aurora">KI-Punkte</span> sammelst du mit großen Lifetime-Challenges.</li>
+      </ul>
+      <p class="text-white/60 text-sm">Jedes Modul benötigt eine Kombination dieser Punkte. Sobald der Fortschrittsbalken voll ist, wird es freigeschaltet.</p>
+    </div>
+
     <div class="grid gap-6 md:grid-cols-2">
       <div
         v-for="module in collections.inventory"

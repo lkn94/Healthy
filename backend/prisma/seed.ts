@@ -4,6 +4,17 @@ const prisma = new PrismaClient();
 
 const modules = [
   {
+    key: 'command-center',
+    title: 'Basis-Kommandozentrale',
+    description: 'Die Grundinfrastruktur für dein SmartHome – hier startet alles.',
+    requiredEnergy: 0,
+    requiredAutomation: 0,
+    requiredAI: 0,
+    icon: '🏠',
+    story: 'Die Kommandozentrale ist aktiv – EVA überwacht jetzt dein Zuhause.',
+    orderIndex: 0
+  },
+  {
     key: 'smart-lighting',
     title: 'Smarte Beleuchtung',
     description: 'Automatisiere deine Lampen mit 5 Szenen.',

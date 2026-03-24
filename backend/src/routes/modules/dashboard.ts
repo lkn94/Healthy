@@ -188,10 +188,12 @@ export default async function dashboardRoutes(app: FastifyInstance) {
         energyPoints >= module.requiredEnergy &&
         automationPoints >= module.requiredAutomation &&
         aiPoints >= module.requiredAI;
+      const progressValue = (current: number, required: number) =>
+        required === 0 ? 1 : Math.min(1, current / required);
       const progress = {
-        energy: Math.min(1, energyPoints / module.requiredEnergy),
-        automation: Math.min(1, module.requiredAutomation ? automationPoints / module.requiredAutomation : 1),
-        ai: Math.min(1, module.requiredAI ? aiPoints / module.requiredAI : 1)
+        energy: progressValue(energyPoints, module.requiredEnergy),
+        automation: progressValue(automationPoints, module.requiredAutomation),
+        ai: progressValue(aiPoints, module.requiredAI)
       };
       return {
         id: module.id,
