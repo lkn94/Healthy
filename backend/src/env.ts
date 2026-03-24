@@ -1,5 +1,18 @@
 import { config } from 'dotenv';
+import path from 'path';
+import fs from 'fs';
 import { z } from 'zod';
+
+const envPaths = [
+  path.resolve(__dirname, '../.env'),
+  path.resolve(__dirname, '../../.env')
+];
+
+for (const envPath of envPaths) {
+  if (fs.existsSync(envPath)) {
+    config({ path: envPath, override: false });
+  }
+}
 
 config();
 
