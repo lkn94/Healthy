@@ -35,13 +35,27 @@
         </div>
         <EChart :options="weeklyChart" height="320px" class="mt-4" />
       </div>
-      <div class="rounded-3xl border border-white/10 bg-gradient-to-br from-aurora/20 to-pulse/10 p-6">
-        <p class="text-xs uppercase tracking-[0.4em] text-white/60">Momentum</p>
-        <p class="mt-4 text-4xl font-display text-white">
-          {{ momentumLabel }}
-        </p>
-        <p class="mt-3 text-sm text-white/70">
-          Vergleiche den heutigen Wert mit dem 7-Tage-Schnitt und erkenne, ob du vor oder hinter deiner Linie liegst.
+      <div class="rounded-3xl border border-white/10 bg-gradient-to-br from-aurora/20 to-pulse/10 p-6 space-y-4">
+        <div class="flex items-center justify-between text-xs uppercase tracking-[0.4em] text-white/60">
+          <span>Momentum</span>
+          <span>{{ momentumLabel }}</span>
+        </div>
+        <div class="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
+          <div class="flex items-center justify-between text-white/80">
+            <span>Heute</span>
+            <span>{{ overview?.today.steps.toLocaleString('de-DE') ?? 0 }} Schritte</span>
+          </div>
+          <div class="flex items-center justify-between text-white/60 mt-2">
+            <span>Ø letzte 7 Tage</span>
+            <span>{{ overview?.today.average7.toLocaleString('de-DE') ?? 0 }}</span>
+          </div>
+          <div class="flex items-center justify-between text-white/60 mt-2">
+            <span>Ø letzte 30 Tage</span>
+            <span>{{ overview?.today.average30.toLocaleString('de-DE') ?? 0 }}</span>
+          </div>
+        </div>
+        <p class="text-sm text-white/70">
+          Momentum zeigt, wie deine heutigen Schritte im Vergleich zum persönlichen 7- bzw. 30-Tage-Schnitt stehen. Grün bedeutet über dem Trend, Rosa darunter.
         </p>
       </div>
     </div>
@@ -107,6 +121,7 @@ const momentumLabel = computed(() => {
   if (!overview.value) return '0%';
   const { steps, average7 } = overview.value.today;
   if (average7 === 0) return '100%';
-  return `${Math.round((steps / average7) * 100)}% vs 7d`;
+  const ratio = Math.round((steps / average7) * 100);
+  return `${ratio}% vs 7d`;
 });
 </script>
