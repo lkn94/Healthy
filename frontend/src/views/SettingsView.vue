@@ -104,7 +104,7 @@
           <input v-model="entitySearch" class="input" placeholder="sensor.schritte oder Name" />
         </label>
         <label class="space-y-2 text-sm text-white/70">
-          <span>Schritt-Sensor</span>
+          <span>Schritt-Sensor <span class="text-white/40 text-xs">(kumulative Schritte des Tages)</span></span>
           <select v-model="mapping.stepsEntityId" class="input" required>
             <option v-for="entity in filteredEntities" :key="entity.entity_id" :value="entity.entity_id">
               {{ entityLabel(entity) }}
@@ -112,7 +112,7 @@
           </select>
         </label>
         <label class="space-y-2 text-sm text-white/70">
-          <span>Gewicht-Sensor</span>
+          <span>Gewicht-Sensor <span class="text-white/40 text-xs">(kg)</span></span>
           <select v-model="mapping.weightEntityId" class="input">
             <option value="">-</option>
             <option v-for="entity in filteredEntities" :key="entity.entity_id" :value="entity.entity_id">
@@ -121,7 +121,7 @@
           </select>
         </label>
         <label class="space-y-2 text-sm text-white/70">
-          <span>Distanz-Sensor</span>
+          <span>Distanz-Sensor <span class="text-white/40 text-xs">(Meter oder km*)</span></span>
           <select v-model="mapping.distanceEntityId" class="input">
             <option value="">-</option>
             <option v-for="entity in filteredEntities" :key="entity.entity_id" :value="entity.entity_id">
@@ -130,7 +130,7 @@
           </select>
         </label>
         <label class="space-y-2 text-sm text-white/70">
-          <span>Aktive-Minuten-Sensor</span>
+          <span>Aktive-Minuten-Sensor <span class="text-white/40 text-xs">(Minuten)</span></span>
           <select v-model="mapping.activeMinutesEntityId" class="input">
             <option value="">-</option>
             <option v-for="entity in filteredEntities" :key="entity.entity_id" :value="entity.entity_id">
@@ -139,7 +139,7 @@
           </select>
         </label>
         <label class="space-y-2 text-sm text-white/70">
-          <span>Kalorien-Sensor</span>
+          <span>Kalorien-Sensor <span class="text-white/40 text-xs">(kcal)</span></span>
           <select v-model="mapping.caloriesEntityId" class="input">
             <option value="">-</option>
             <option v-for="entity in filteredEntities" :key="entity.entity_id" :value="entity.entity_id">
@@ -147,6 +147,7 @@
             </option>
           </select>
         </label>
+        <p class="md:col-span-2 text-xs text-white/50">* Distanz-Sensor sollte kumulative Strecke liefern. Werte &gt; 500 interpretieren wir automatisch als Meter und rechnen in Kilometer um.</p>
         <button type="submit" class="md:col-span-2 rounded-2xl bg-gradient-to-r from-aurora to-pulse px-4 py-3 text-midnight font-semibold">Speichern</button>
       </form>
 
