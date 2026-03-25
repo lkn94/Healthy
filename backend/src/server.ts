@@ -9,6 +9,7 @@ import prismaPlugin from './plugins/prisma';
 import authPlugin from './plugins/auth';
 import { registerRoutes } from './routes';
 import { registerSchedulers } from './services/scheduler';
+import { runDataMaintenance } from './services/maintenance';
 
 const buildServer = () => {
   const app = Fastify({
@@ -43,6 +44,7 @@ const buildServer = () => {
 
   app.after(() => {
     registerSchedulers(app);
+    runDataMaintenance(app);
   });
 
   return app;

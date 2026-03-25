@@ -1,5 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import { differenceInCalendarDays, getISOWeek, getISOWeekYear } from 'date-fns';
+import { env } from '../env';
 
 export interface LifetimeStats {
   totalSteps: number;
@@ -25,8 +26,12 @@ export const calculateLifetimeStats = (snapshots: { date: Date; steps: number; d
 
   for (const snapshot of sorted) {
     totalSteps += snapshot.steps;
-    if (snapshot.distanceKm) {
-      totalKm += snapshot.distanceKm;
+    const derivedDistance =
+      typeof snapshot.distanceKm === 'number'
+        ? snapshot.distanceKm
+        : Number(((snapshot.steps * env.DEFAULT_STEP_LENGTH_METERS) / 1000).toFixed(2));
+    if (derivedDistance > 0) {
+      totalKm += derivedDistance;
     }
     if (snapshot.steps > bestDaySteps) {
       bestDaySteps = snapshot.steps;
