@@ -24,3 +24,20 @@ Healthy ist das digitale Mission-Control für alle, die Home Assistant lieben un
 3. Registrierung via UI, erste Home-Assistant-Verbindung anlegen, Sensoren mappen, Import starten – fertig!
 
 > Tipp: Wenn du schon lange Daten gesammelt hast, starte zuerst einen Import (z. B. `fromDate = 2023-01-01`). Healthy korrigiert automatisch Distanz-Überläufe und rechnet Lifetime-Kilometer neu, sodass deine Gesamtreise realistisch bleibt.
+
+## Technischer Deep Dive
+
+| Layer | Umsetzung | Warum das vertrauenswürdig ist |
+| --- | --- | --- |
+| **Frontend** | Vue 3 + Vite + Tailwind + ECharts; SPA läuft innerhalb desselben Containers wie das Backend und spricht ausschließlich über `/api`. | Keine Third-Party-Tracker, Build kommt aus unserem Docker-Image. Relative API-URL sorgt dafür, dass keine Hardcodings (`localhost`) passieren. |
+| **Backend** | Fastify + TypeScript + Prisma + SQLite (WAL). Scheduler via node-cron für 30-Minuten-Syncs + Midnight-Run. | Fastify liefert strukturierte Fehler, Prisma validiert, WAL-Mode schützt vor Korruption. Alle Jobs laufen sequenziell pro Verbindung, so gibt es keine parallelen Writes auf dieselbe DB. |
+| **Security** | JWT Auth (argon2 Hash), AES-256-GCM verschlüsselte Home-Assistant-Tokens, CORS nur für proxied SPA. | Tokens verlassen den Server nie im Klartext, JWT sitzt im LocalStorage – kein Refresh Token nötig, weil Sessions bewusst kurz gehalten werden können. |
+| **Datenaufbereitung** | `syncRunner` holt History aus Home Assistant, mappt Sensoren und generiert Daily Snapshots mit Deltas (Schritte, Distanz, Kalorien etc.). Lifetime-Stats werden nach jedem Job per `recalculateLifetimeStats` aktualisiert. | Deltas verhindern doppelte Schrittzählung bei Mitternachtswechsel, Distanz-Werte werden normalisiert (Meter vs. Kilometer). Wartungsjob bereinigt Alt-Daten automatisch. |
+| **Deployment** | Single Service im `docker-compose.yml`, Frontend + Backend Multi-Stage-Build im Dockerfile, `APP_PORT` wird Host=Container gemappt. Datenbank liegt in `./data/app.db` und wird als Volume eingebunden. | Ein `docker compose up --build` reproduziert exakt das gleiche Setup wie bei dir lokal. Keine versteckten Cloud-Abhängigkeiten. |
+
+### Vertrauensanker
+
+1. **Offener Code & reproduzierbarer Build** – Alles ist TypeScript-basiert, du kannst `npm run test`/`npm run build` selbst fahren oder das Docker-Image lokal bauen.
+2. **Keine externen APIs** – Healthy spricht ausschließlich mit deiner Home-Assistant-Instanz; alle Secrets bleiben in deiner Infrastruktur.
+3. **Defensive Defaults** – Sensor-Mapping verlangt explizite Auswahl der Entity IDs; Distanz > 500 wird als Meter interpretiert; Wartungsjob korrigiert Datensätze automatisch.
+4. **Portainer/Docker ready** – Environment-Variablen kommen aus `.env` oder den Stack-Einstellungen, keine `.env` im Repo selbst. Dadurch kannst du Secrets direkt über Portainer verwalten.
