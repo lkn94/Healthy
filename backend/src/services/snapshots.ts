@@ -124,11 +124,13 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
       lastRawSteps = rawSteps;
     }
 
-    const distanceKm = aggregate?.distance
-      ? aggregate.distance
-      : steps > 0
-      ? Number(((steps * params.defaultStepLengthMeters) / 1000).toFixed(2))
-      : undefined;
+    let distanceKm: number | undefined;
+    if (typeof aggregate?.distance === 'number') {
+      const normalized = aggregate.distance > 500 ? aggregate.distance / 1000 : aggregate.distance;
+      distanceKm = Number(normalized.toFixed(2));
+    } else if (steps > 0) {
+      distanceKm = Number(((steps * params.defaultStepLengthMeters) / 1000).toFixed(2));
+    }
     const activeMinutes = aggregate?.activeMinutes;
     const calories = aggregate?.calories;
 
