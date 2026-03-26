@@ -1,4 +1,4 @@
-import { eachDayOfInterval, startOfDay } from 'date-fns';
+import { addDays, eachDayOfInterval, startOfDay } from 'date-fns';
 import type { SensorMapping } from '@prisma/client';
 import type { HistoryResponse, HaStateEntity } from './homeAssistant';
 
@@ -42,7 +42,6 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
   const dayAggregation = new Map<
     string,
     {
-      stepMax?: number;
       weightValues: number[];
       distance?: number;
       activeMinutes?: number;
@@ -65,15 +64,6 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
     }
     return dayAggregation.get(dayKey)!;
   };
-
-  trackEntry(params.mapping.stepsEntityId, (entry) => {
-    const value = parseNumber(entry.state);
-    if (value === undefined) return;
-    const dayKey = dayKeyFromIso(entry.last_changed);
-    const day = ensureDay(dayKey);
-    const rounded = Math.round(value);
-    day.stepMax = day.stepMax !== undefined ? Math.max(day.stepMax, rounded) : rounded;
-  });
 
   trackEntry(params.mapping.weightEntityId, (entry) => {
     const value = parseNumber(entry.state);
@@ -108,7 +98,9 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
 
   const snapshots: DailySnapshotResult[] = [];
   const days = eachDayOfInterval({ start: startOfDay(params.from), end: startOfDay(params.to) });
-  for (const day of days) {
+  const stepSeries = computeDailySteps(entityMap.get(params.mapping.stepsEntityId ?? ''), days);
+
+  days.forEach((day, index) => {
     const key = day.toISOString().split('T')[0];
     const aggregate = dayAggregation.get(key);
     const weightValues = aggregate?.weightValues ?? [];
@@ -116,7 +108,7 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
       ? Number((weightValues.reduce((a, b) => a + b, 0) / weightValues.length).toFixed(2))
       : undefined;
 
-    const steps = aggregate?.stepMax ?? 0;
+    const steps = stepSeries[index] ?? 0;
 
     let distanceKm: number | undefined;
     if (typeof aggregate?.distance === 'number') {
@@ -136,7 +128,39 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
       activeMinutes,
       calories
     });
-  }
+  });
 
   return snapshots;
+};
+
+const computeDailySteps = (entries: HaStateEntity[] | undefined, days: Date[]) => {
+  if (!entries || !entries.length) {
+    return days.map(() => 0);
+  }
+
+  const sorted = [...entries].sort(
+    (a, b) => new Date(a.last_changed).getTime() - new Date(b.last_changed).getTime()
+  );
+  const results: number[] = [];
+  let pointer = 0;
+  let lastValue = 0;
+
+  for (const day of days) {
+    const dayEnd = addDays(day, 1).getTime();
+    while (pointer < sorted.length) {
+      const entry = sorted[pointer];
+      const ts = new Date(entry.last_changed).getTime();
+      if (ts >= dayEnd) {
+        break;
+      }
+      const value = parseNumber(entry.state);
+      if (typeof value === 'number') {
+        lastValue = Math.max(lastValue, Math.round(value));
+      }
+      pointer++;
+    }
+    results.push(lastValue);
+  }
+
+  return results;
 };
