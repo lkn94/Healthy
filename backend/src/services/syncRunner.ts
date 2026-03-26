@@ -44,17 +44,15 @@ export const runSyncJob = async (params: SyncRunnerParams) => {
       connection.mapping.caloriesEntityId
     ].filter(Boolean) as string[];
 
-    const chunkDays = 3;
     const historyMap = new Map<string, HaStateEntity[]>();
     let cursor = startOfDay(params.fromDate);
     const finalEnd = addDays(startOfDay(params.toDate), 1);
 
     while (cursor < finalEnd) {
-      const chunkEnd = addDays(cursor, chunkDays);
-      const chunkTo = chunkEnd < finalEnd ? chunkEnd : finalEnd;
+      const dayEnd = addDays(cursor, 1);
       const chunkHistory = await client.fetchHistory({
         from: cursor,
-        to: chunkTo,
+        to: dayEnd,
         entityIds
       });
 
@@ -67,7 +65,7 @@ export const runSyncJob = async (params: SyncRunnerParams) => {
         historyMap.get(entityId)!.push(...series);
       }
 
-      cursor = chunkTo;
+      cursor = dayEnd;
     }
 
     const mergedHistory: HistoryResponse = [];
