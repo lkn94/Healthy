@@ -1,7 +1,11 @@
 import type { FastifyInstance } from 'fastify';
-import { startOfDay, subDays } from 'date-fns';
+import { startOfDay, subDays, addDays } from 'date-fns';
+import fs from 'fs';
+import path from 'path';
 import { recalculateLifetimeStats } from './stats';
 import { runSyncJob } from './syncRunner';
+
+const HISTORY_MARKER_PATH = path.resolve(__dirname, '../../data/.history_rebuilt');
 
 const normalizeSnapshotDistances = async (app: FastifyInstance) => {
   const snapshots = await app.prisma.dailyHealthSnapshot.findMany({
@@ -29,6 +33,13 @@ const normalizeSnapshotDistances = async (app: FastifyInstance) => {
 
 export const runDataMaintenance = async (app: FastifyInstance) => {
   try {
+    if (!fs.existsSync(HISTORY_MARKER_PATH)) {
+      const success = await rebuildHistoricalSnapshots(app);
+      if (success) {
+        fs.writeFileSync(HISTORY_MARKER_PATH, new Date().toISOString());
+      }
+    }
+
     await rebuildRecentSnapshots(app);
     const affectedConnections = await normalizeSnapshotDistances(app);
     const allConnections = await app.prisma.homeAssistantConnection.findMany({
@@ -68,4 +79,49 @@ const rebuildRecentSnapshots = async (app: FastifyInstance) => {
       app.log.warn({ err: error, connectionId: connection.id }, 'Failed to rebuild recent snapshots');
     }
   }
+};
+
+const rebuildHistoricalSnapshots = async (app: FastifyInstance) => {
+  const connections = await app.prisma.homeAssistantConnection.findMany({
+    select: { id: true, userId: true }
+  });
+  if (!connections.length) return true;
+
+  const chunkSize = 7; // days per chunk
+  const now = new Date();
+
+  for (const connection of connections) {
+    const firstSnapshot = await app.prisma.dailyHealthSnapshot.findFirst({
+      where: { connectionId: connection.id },
+      orderBy: { date: 'asc' }
+    });
+    if (!firstSnapshot) {
+      continue;
+    }
+
+    let cursor = startOfDay(firstSnapshot.date);
+    while (cursor < now) {
+      const chunkEndDate = addDays(cursor, chunkSize - 1);
+      const toDate = chunkEndDate < now ? chunkEndDate : now;
+      try {
+        await runSyncJob({
+          prisma: app.prisma,
+          connectionId: connection.id,
+          userId: connection.userId,
+          type: 'SCHEDULED',
+          fromDate: cursor,
+          toDate
+        });
+      } catch (error) {
+        app.log.warn(
+          { err: error, connectionId: connection.id },
+          'Failed to rebuild historical chunk'
+        );
+        return false;
+      }
+      cursor = addDays(startOfDay(chunkEndDate), 1);
+    }
+  }
+
+  return true;
 };
