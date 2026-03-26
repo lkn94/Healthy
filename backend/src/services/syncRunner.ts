@@ -59,33 +59,48 @@ export const runSyncJob = async (params: SyncRunnerParams) => {
     });
 
     for (const snapshot of snapshots) {
-      await params.prisma.dailyHealthSnapshot.upsert({
+      const targetDate = startOfDay(snapshot.date);
+      const existing = await params.prisma.dailyHealthSnapshot.findUnique({
         where: {
           userId_connectionId_date: {
             userId: params.userId,
             connectionId: params.connectionId,
-            date: startOfDay(snapshot.date)
+            date: targetDate
           }
-        },
-        update: {
-          steps: snapshot.steps,
-          weight: snapshot.weight,
-          distanceKm: snapshot.distanceKm,
-          activeMinutes: snapshot.activeMinutes,
-          calories: snapshot.calories,
-          source: params.type.toLowerCase()
-        },
-        create: {
-          userId: params.userId,
-          connectionId: params.connectionId,
-          date: startOfDay(snapshot.date),
-          steps: snapshot.steps,
-          weight: snapshot.weight,
-          distanceKm: snapshot.distanceKm,
-          activeMinutes: snapshot.activeMinutes,
-          calories: snapshot.calories,
-          source: params.type.toLowerCase()
         }
+      });
+
+      const payload = {
+        userId: params.userId,
+        connectionId: params.connectionId,
+        date: targetDate,
+        steps: snapshot.steps,
+        weight: snapshot.weight,
+        distanceKm: snapshot.distanceKm,
+        activeMinutes: snapshot.activeMinutes,
+        calories: snapshot.calories,
+        source: params.type.toLowerCase()
+      };
+
+      if (!existing) {
+        await params.prisma.dailyHealthSnapshot.create({ data: payload });
+        continue;
+      }
+
+      const hasNewData =
+        (snapshot.steps ?? 0) > 0 ||
+        typeof snapshot.weight === 'number' ||
+        typeof snapshot.distanceKm === 'number' ||
+        typeof snapshot.activeMinutes === 'number' ||
+        typeof snapshot.calories === 'number';
+
+      if (!hasNewData) {
+        continue;
+      }
+
+      await params.prisma.dailyHealthSnapshot.update({
+        where: { id: existing.id },
+        data: payload
       });
     }
 
