@@ -1,5 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
-import { startOfDay, subDays } from 'date-fns';
+import { startOfDay } from 'date-fns';
 import { decrypt } from '../utils/crypto';
 import { HomeAssistantClient } from './homeAssistant';
 import { buildDailySnapshots } from './snapshots';
@@ -44,9 +44,8 @@ export const runSyncJob = async (params: SyncRunnerParams) => {
       connection.mapping.caloriesEntityId
     ].filter(Boolean) as string[];
 
-    const historyFrom = subDays(params.fromDate, 1);
     const history = await client.fetchHistory({
-      from: historyFrom,
+      from: params.fromDate,
       to: params.toDate,
       entityIds
     });
@@ -54,15 +53,12 @@ export const runSyncJob = async (params: SyncRunnerParams) => {
     const snapshots = buildDailySnapshots({
       history,
       mapping: connection.mapping,
-      from: historyFrom,
+      from: params.fromDate,
       to: params.toDate,
       defaultStepLengthMeters: env.DEFAULT_STEP_LENGTH_METERS
     });
 
-    const actualStart = startOfDay(params.fromDate);
-    const relevantSnapshots = snapshots.filter((snapshot) => snapshot.date >= actualStart);
-
-    for (const snapshot of relevantSnapshots) {
+    for (const snapshot of snapshots) {
       await params.prisma.dailyHealthSnapshot.upsert({
         where: {
           userId_connectionId_date: {
@@ -100,7 +96,7 @@ export const runSyncJob = async (params: SyncRunnerParams) => {
       data: { lastSyncAt: new Date(), status: 'idle' }
     });
 
-    return relevantSnapshots.length;
+    return snapshots.length;
   } catch (error) {
     await params.prisma.homeAssistantConnection.update({
       where: { id: params.connectionId },

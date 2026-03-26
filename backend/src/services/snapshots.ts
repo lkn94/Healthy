@@ -36,7 +36,6 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
     string,
     {
       stepMax?: number;
-      stepMin?: number;
       weightValues: number[];
       distance?: number;
       activeMinutes?: number;
@@ -67,7 +66,6 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
     const day = ensureDay(dayKey);
     const rounded = Math.round(value);
     day.stepMax = day.stepMax !== undefined ? Math.max(day.stepMax, rounded) : rounded;
-    day.stepMin = day.stepMin !== undefined ? Math.min(day.stepMin, rounded) : rounded;
   });
 
   trackEntry(params.mapping.weightEntityId, (entry) => {
@@ -103,8 +101,6 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
 
   const snapshots: DailySnapshotResult[] = [];
   const days = eachDayOfInterval({ start: startOfDay(params.from), end: startOfDay(params.to) });
-  let previousStepMax: number | null = null;
-
   for (const day of days) {
     const key = day.toISOString().split('T')[0];
     const aggregate = dayAggregation.get(key);
@@ -113,16 +109,7 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
       ? Number((weightValues.reduce((a, b) => a + b, 0) / weightValues.length).toFixed(2))
       : undefined;
 
-    let steps = 0;
-    if (typeof aggregate?.stepMax === 'number') {
-      const stepMax = aggregate.stepMax;
-      if (previousStepMax !== null) {
-        steps = stepMax >= previousStepMax ? stepMax - previousStepMax : stepMax;
-      } else {
-        steps = stepMax;
-      }
-      previousStepMax = stepMax;
-    }
+    const steps = aggregate?.stepMax ?? 0;
 
     let distanceKm: number | undefined;
     if (typeof aggregate?.distance === 'number') {

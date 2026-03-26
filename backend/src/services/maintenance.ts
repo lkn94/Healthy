@@ -1,5 +1,7 @@
 import type { FastifyInstance } from 'fastify';
+import { startOfDay, subDays } from 'date-fns';
 import { recalculateLifetimeStats } from './stats';
+import { runSyncJob } from './syncRunner';
 
 const normalizeSnapshotDistances = async (app: FastifyInstance) => {
   const snapshots = await app.prisma.dailyHealthSnapshot.findMany({
@@ -27,6 +29,7 @@ const normalizeSnapshotDistances = async (app: FastifyInstance) => {
 
 export const runDataMaintenance = async (app: FastifyInstance) => {
   try {
+    await rebuildRecentSnapshots(app);
     const affectedConnections = await normalizeSnapshotDistances(app);
     const allConnections = await app.prisma.homeAssistantConnection.findMany({
       select: { id: true }
@@ -39,5 +42,30 @@ export const runDataMaintenance = async (app: FastifyInstance) => {
     }
   } catch (error) {
     app.log.error({ err: error }, 'Data maintenance failed');
+  }
+};
+
+const rebuildRecentSnapshots = async (app: FastifyInstance) => {
+  const connections = await app.prisma.homeAssistantConnection.findMany({
+    select: { id: true, userId: true }
+  });
+  if (!connections.length) return;
+
+  const toDate = new Date();
+  const fromDate = subDays(startOfDay(toDate), 1);
+
+  for (const connection of connections) {
+    try {
+      await runSyncJob({
+        prisma: app.prisma,
+        connectionId: connection.id,
+        userId: connection.userId,
+        type: 'SCHEDULED',
+        fromDate,
+        toDate
+      });
+    } catch (error) {
+      app.log.warn({ err: error, connectionId: connection.id }, 'Failed to rebuild recent snapshots');
+    }
   }
 };
