@@ -1,7 +1,7 @@
 import type { PrismaClient } from '@prisma/client';
 import { startOfDay, addDays } from 'date-fns';
 import { decrypt } from '../utils/crypto';
-import { HomeAssistantClient, type HaStateEntity } from './homeAssistant';
+import { HomeAssistantClient, type HaStateEntity, type HistoryResponse } from './homeAssistant';
 import { buildDailySnapshots } from './snapshots';
 import { recalculateLifetimeStats } from './stats';
 import { env } from '../env';
