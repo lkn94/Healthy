@@ -1,7 +1,7 @@
 import type { PrismaClient } from '@prisma/client';
-import { startOfDay } from 'date-fns';
+import { startOfDay, addDays } from 'date-fns';
 import { decrypt } from '../utils/crypto';
-import { HomeAssistantClient } from './homeAssistant';
+import { HomeAssistantClient, type HaStateEntity } from './homeAssistant';
 import { buildDailySnapshots } from './snapshots';
 import { recalculateLifetimeStats } from './stats';
 import { env } from '../env';
@@ -44,14 +44,40 @@ export const runSyncJob = async (params: SyncRunnerParams) => {
       connection.mapping.caloriesEntityId
     ].filter(Boolean) as string[];
 
-    const history = await client.fetchHistory({
-      from: params.fromDate,
-      to: params.toDate,
-      entityIds
-    });
+    const chunkDays = 3;
+    const historyMap = new Map<string, HaStateEntity[]>();
+    let cursor = startOfDay(params.fromDate);
+    const endDate = params.toDate;
+
+    while (cursor < endDate) {
+      const chunkEnd = addDays(cursor, chunkDays);
+      const chunkTo = chunkEnd < endDate ? chunkEnd : endDate;
+      const chunkHistory = await client.fetchHistory({
+        from: cursor,
+        to: chunkTo,
+        entityIds
+      });
+
+      for (const series of chunkHistory) {
+        if (!series.length) continue;
+        const entityId = series[0].entity_id;
+        if (!historyMap.has(entityId)) {
+          historyMap.set(entityId, []);
+        }
+        historyMap.get(entityId)!.push(...series);
+      }
+
+      cursor = chunkTo;
+    }
+
+    const mergedHistory: HistoryResponse = [];
+    for (const entries of historyMap.values()) {
+      entries.sort((a, b) => new Date(a.last_changed).getTime() - new Date(b.last_changed).getTime());
+      mergedHistory.push(entries);
+    }
 
     const snapshots = buildDailySnapshots({
-      history,
+      history: mergedHistory,
       mapping: connection.mapping,
       from: params.fromDate,
       to: params.toDate,
