@@ -103,6 +103,8 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
 
   const snapshots: DailySnapshotResult[] = [];
   const days = eachDayOfInterval({ start: startOfDay(params.from), end: startOfDay(params.to) });
+  let previousStepMax: number | null = null;
+
   for (const day of days) {
     const key = day.toISOString().split('T')[0];
     const aggregate = dayAggregation.get(key);
@@ -111,11 +113,15 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
       ? Number((weightValues.reduce((a, b) => a + b, 0) / weightValues.length).toFixed(2))
       : undefined;
 
-    const stepMax = aggregate?.stepMax ?? 0;
-    const stepMin = aggregate?.stepMin;
-    let steps = stepMax;
-    if (typeof stepMin === 'number' && stepMin < stepMax) {
-      steps = stepMax - stepMin;
+    let steps = 0;
+    if (typeof aggregate?.stepMax === 'number') {
+      const stepMax = aggregate.stepMax;
+      if (previousStepMax !== null) {
+        steps = stepMax >= previousStepMax ? stepMax - previousStepMax : stepMax;
+      } else {
+        steps = stepMax;
+      }
+      previousStepMax = stepMax;
     }
 
     let distanceKm: number | undefined;
