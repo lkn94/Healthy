@@ -572,25 +572,61 @@ const dailyChallengeLevels = [
     const todaySteps = todayEntry?.steps ?? 0;
     const todayCalories = todayEntry?.calories ?? 0;
 
-    const progress = await app.prisma.dailyChallengeProgress.findMany({
+    const todaysProgress = await app.prisma.dailyChallengeProgress.findMany({
       where: { userId, date: today }
     });
 
-    const daily = dailyChallengeLevels.map((challenge) => {
-      const previous = progress.find((p) => p.challengeId === challenge.id);
-      const currentLevel = previous?.level ?? 0;
-      const target = challenge.base + challenge.increment * currentLevel;
+    const levelGroups = await app.prisma.dailyChallengeProgress.groupBy({
+      by: ['challengeId'],
+      where: { userId },
+      _max: { level: true }
+    });
+
+    const levelMap = new Map(levelGroups.map((group) => [group.challengeId, group._max.level ?? 0]));
+    const todayMap = new Map(todaysProgress.map((entry) => [entry.challengeId, entry]));
+
+    const daily = [] as {
+      id: string;
+      label: string;
+      level: number;
+      target: number;
+      currentValue: number;
+      completed: boolean;
+    }[];
+
+    for (const challenge of dailyChallengeLevels) {
+      const achievedLevel = levelMap.get(challenge.id) ?? 0;
+      const target = challenge.base + challenge.increment * achievedLevel;
       const currentValue = challenge.id === 'steps-day' ? todaySteps : todayCalories;
       const completed = currentValue >= target;
-      return {
+
+      if (completed && !todayMap.has(challenge.id)) {
+        try {
+          const newRecord = await app.prisma.dailyChallengeProgress.create({
+            data: {
+              userId,
+              date: today,
+              challengeId: challenge.id,
+              level: achievedLevel + 1,
+              completedAt: new Date()
+            }
+          });
+          levelMap.set(challenge.id, newRecord.level);
+          todayMap.set(challenge.id, newRecord);
+        } catch (error) {
+          app.log.error({ err: error }, 'Failed to store daily challenge progress');
+        }
+      }
+
+      daily.push({
         id: challenge.id,
         label: challenge.label,
-        level: currentLevel,
+        level: achievedLevel,
         target,
         currentValue,
-        completed
-      };
-    });
+        completed: currentValue >= target
+      });
+    }
 
     return { daily };
   });

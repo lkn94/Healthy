@@ -35,7 +35,8 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
   const dayAggregation = new Map<
     string,
     {
-      steps?: number;
+      stepMax?: number;
+      stepMin?: number;
       weightValues: number[];
       distance?: number;
       activeMinutes?: number;
@@ -64,7 +65,9 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
     if (value === undefined) return;
     const dayKey = entry.last_changed.split('T')[0];
     const day = ensureDay(dayKey);
-    day.steps = Math.max(day.steps ?? 0, Math.round(value));
+    const rounded = Math.round(value);
+    day.stepMax = day.stepMax !== undefined ? Math.max(day.stepMax, rounded) : rounded;
+    day.stepMin = day.stepMin !== undefined ? Math.min(day.stepMin, rounded) : rounded;
   });
 
   trackEntry(params.mapping.weightEntityId, (entry) => {
@@ -100,28 +103,19 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
 
   const snapshots: DailySnapshotResult[] = [];
   const days = eachDayOfInterval({ start: startOfDay(params.from), end: startOfDay(params.to) });
-  let lastRawSteps: number | null = null;
-
   for (const day of days) {
     const key = day.toISOString().split('T')[0];
     const aggregate = dayAggregation.get(key);
-    const rawSteps = typeof aggregate?.steps === 'number' ? aggregate.steps : null;
     const weightValues = aggregate?.weightValues ?? [];
     const weight = weightValues.length
       ? Number((weightValues.reduce((a, b) => a + b, 0) / weightValues.length).toFixed(2))
       : undefined;
 
-    let steps = 0;
-    if (rawSteps !== null) {
-      if (lastRawSteps !== null && rawSteps >= lastRawSteps) {
-        steps = rawSteps - lastRawSteps;
-      } else if (lastRawSteps !== null && rawSteps < lastRawSteps) {
-        steps = rawSteps;
-      } else {
-        steps = rawSteps;
-      }
-      steps = Math.max(0, steps);
-      lastRawSteps = rawSteps;
+    const stepMax = aggregate?.stepMax ?? 0;
+    const stepMin = aggregate?.stepMin;
+    let steps = stepMax;
+    if (typeof stepMin === 'number' && stepMin < stepMax) {
+      steps = stepMax - stepMin;
     }
 
     let distanceKm: number | undefined;
