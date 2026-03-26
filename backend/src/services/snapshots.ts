@@ -24,6 +24,13 @@ const parseNumber = (value: string) => {
   return Number.isFinite(parsed) ? parsed : undefined;
 };
 
+const dayKeyFromIso = (iso: string) => {
+  const date = new Date(iso);
+  const tzOffset = date.getTimezoneOffset();
+  const local = new Date(date.getTime() - tzOffset * 60000);
+  return local.toISOString().split('T')[0];
+};
+
 export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotResult[] => {
   const entityMap = new Map<string, HaStateEntity[]>();
   for (const entries of params.history) {
@@ -62,7 +69,7 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
   trackEntry(params.mapping.stepsEntityId, (entry) => {
     const value = parseNumber(entry.state);
     if (value === undefined) return;
-    const dayKey = entry.last_changed.split('T')[0];
+    const dayKey = dayKeyFromIso(entry.last_changed);
     const day = ensureDay(dayKey);
     const rounded = Math.round(value);
     day.stepMax = day.stepMax !== undefined ? Math.max(day.stepMax, rounded) : rounded;
@@ -71,14 +78,14 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
   trackEntry(params.mapping.weightEntityId, (entry) => {
     const value = parseNumber(entry.state);
     if (value === undefined) return;
-    const dayKey = entry.last_changed.split('T')[0];
+    const dayKey = dayKeyFromIso(entry.last_changed);
     ensureDay(dayKey).weightValues.push(value);
   });
 
   trackEntry(params.mapping.distanceEntityId, (entry) => {
     const value = parseNumber(entry.state);
     if (value === undefined) return;
-    const dayKey = entry.last_changed.split('T')[0];
+    const dayKey = dayKeyFromIso(entry.last_changed);
     const day = ensureDay(dayKey);
     day.distance = Math.max(day.distance ?? 0, value);
   });
@@ -86,7 +93,7 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
   trackEntry(params.mapping.activeMinutesEntityId, (entry) => {
     const value = parseNumber(entry.state);
     if (value === undefined) return;
-    const dayKey = entry.last_changed.split('T')[0];
+    const dayKey = dayKeyFromIso(entry.last_changed);
     const day = ensureDay(dayKey);
     day.activeMinutes = Math.max(day.activeMinutes ?? 0, Math.round(value));
   });
@@ -94,7 +101,7 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
   trackEntry(params.mapping.caloriesEntityId, (entry) => {
     const value = parseNumber(entry.state);
     if (value === undefined) return;
-    const dayKey = entry.last_changed.split('T')[0];
+    const dayKey = dayKeyFromIso(entry.last_changed);
     const day = ensureDay(dayKey);
     day.calories = Math.max(day.calories ?? 0, Math.round(value));
   });
