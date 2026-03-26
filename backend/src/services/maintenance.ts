@@ -52,7 +52,7 @@ const rebuildRecentSnapshots = async (app: FastifyInstance) => {
   if (!connections.length) return;
 
   const toDate = new Date();
-  const fromDate = subDays(startOfDay(toDate), 1);
+  const fromDate = subDays(startOfDay(toDate), 4);
 
   for (const connection of connections) {
     try {
