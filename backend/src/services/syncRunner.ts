@@ -47,11 +47,11 @@ export const runSyncJob = async (params: SyncRunnerParams) => {
     const chunkDays = 3;
     const historyMap = new Map<string, HaStateEntity[]>();
     let cursor = startOfDay(params.fromDate);
-    const endDate = params.toDate;
+    const finalEnd = addDays(startOfDay(params.toDate), 1);
 
-    while (cursor < endDate) {
+    while (cursor < finalEnd) {
       const chunkEnd = addDays(cursor, chunkDays);
-      const chunkTo = chunkEnd < endDate ? chunkEnd : endDate;
+      const chunkTo = chunkEnd < finalEnd ? chunkEnd : finalEnd;
       const chunkHistory = await client.fetchHistory({
         from: cursor,
         to: chunkTo,
