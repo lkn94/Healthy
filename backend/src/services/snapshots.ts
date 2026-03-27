@@ -98,7 +98,7 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
 
   const snapshots: DailySnapshotResult[] = [];
   const days = eachDayOfInterval({ start: startOfDay(params.from), end: startOfDay(params.to) });
-  const stepSeries = computeDailySteps(entityMap.get(params.mapping.stepsEntityId ?? ''), days, params.mapping.stepsEntityId ?? '');
+  const stepSeries = computeDailySteps(entityMap.get(params.mapping.stepsEntityId ?? ''), days);
 
   days.forEach((day, index) => {
     const key = day.toISOString().split('T')[0];
@@ -133,7 +133,7 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
   return snapshots;
 };
 
-const computeDailySteps = (entries: HaStateEntity[] | undefined, days: Date[], entityId: string) => {
+const computeDailySteps = (entries: HaStateEntity[] | undefined, days: Date[]) => {
   if (!entries || !entries.length) {
     return days.map(() => 0);
   }
@@ -148,27 +148,14 @@ const computeDailySteps = (entries: HaStateEntity[] | undefined, days: Date[], e
     const dayStart = startOfDay(day).getTime();
     const dayEnd = addDays(day, 1).getTime();
     let maxValue = 0;
-    let lastValueBeforeDay = 0;
-
-    let localPointer = pointer;
-    while (localPointer < sorted.length) {
-      const entry = sorted[localPointer];
-      const ts = new Date(entry.last_changed).getTime();
-      if (ts >= dayStart) {
-        break;
-      }
-      const value = parseNumber(entry.state);
-      if (typeof value === 'number') {
-        lastValueBeforeDay = Math.max(lastValueBeforeDay, Math.round(value));
-      }
-      localPointer++;
-    }
-
-    pointer = localPointer;
 
     while (pointer < sorted.length) {
       const entry = sorted[pointer];
       const ts = new Date(entry.last_changed).getTime();
+      if (ts < dayStart) {
+        pointer++;
+        continue;
+      }
       if (ts >= dayEnd) {
         break;
       }
@@ -178,10 +165,6 @@ const computeDailySteps = (entries: HaStateEntity[] | undefined, days: Date[], e
         maxValue = Math.max(maxValue, rounded);
       }
       pointer++;
-    }
-
-    if (maxValue === 0 && lastValueBeforeDay > 0) {
-      maxValue = lastValueBeforeDay;
     }
 
     results.push(maxValue);
