@@ -82,8 +82,11 @@ export const runSyncJob = async (params: SyncRunnerParams) => {
       defaultStepLengthMeters: env.DEFAULT_STEP_LENGTH_METERS
     });
 
+    const todayStart = startOfDay(new Date()).getTime();
+
     for (const snapshot of snapshots) {
       const targetDate = startOfDay(snapshot.date);
+      const targetTime = targetDate.getTime();
       const existing = await params.prisma.dailyHealthSnapshot.findUnique({
         where: {
           userId_connectionId_date: {
@@ -114,13 +117,13 @@ export const runSyncJob = async (params: SyncRunnerParams) => {
         typeof snapshot.calories === 'number';
 
       if (!existing) {
-        if (hasAnyData) {
+        if (hasAnyData || targetTime === todayStart) {
           await params.prisma.dailyHealthSnapshot.create({ data: payload });
         }
         continue;
       }
 
-      if (!hasAnyData) {
+      if (!hasAnyData && targetTime < todayStart) {
         continue;
       }
 

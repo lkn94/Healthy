@@ -149,8 +149,7 @@ const computeDailySteps = (entries: HaStateEntity[] | undefined, days: Date[]) =
   for (const day of days) {
     const dayStart = startOfDay(day).getTime();
     const dayEnd = addDays(day, 1).getTime();
-    let maxValue = 0;
-    let hasData = false;
+    let latestValue: number | null = null;
 
     while (pointer < sorted.length) {
       const entry = sorted[pointer];
@@ -164,14 +163,12 @@ const computeDailySteps = (entries: HaStateEntity[] | undefined, days: Date[]) =
       }
       const value = parseNumber(entry.state);
       if (typeof value === 'number') {
-        const rounded = Math.round(value);
-        maxValue = Math.max(maxValue, rounded);
-        hasData = true;
+        latestValue = Math.round(value);
       }
       pointer++;
     }
 
-    results.push({ value: maxValue, hasData });
+    results.push({ value: latestValue ?? 0, hasData: latestValue !== null });
   }
 
   return results;
