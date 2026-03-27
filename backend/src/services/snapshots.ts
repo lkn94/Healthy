@@ -98,7 +98,7 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
 
   const snapshots: DailySnapshotResult[] = [];
   const days = eachDayOfInterval({ start: startOfDay(params.from), end: startOfDay(params.to) });
-  const stepSeries = computeDailySteps(entityMap.get(params.mapping.stepsEntityId ?? ''), days);
+  const stepSeries = computeDailySteps(entityMap.get(params.mapping.stepsEntityId ?? ''), days, params.mapping.stepsEntityId ?? '');
 
   days.forEach((day, index) => {
     const key = day.toISOString().split('T')[0];
@@ -133,7 +133,7 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
   return snapshots;
 };
 
-const computeDailySteps = (entries: HaStateEntity[] | undefined, days: Date[]) => {
+const computeDailySteps = (entries: HaStateEntity[] | undefined, days: Date[], entityId: string) => {
   if (!entries || !entries.length) {
     return days.map(() => 0);
   }
@@ -143,10 +143,29 @@ const computeDailySteps = (entries: HaStateEntity[] | undefined, days: Date[]) =
   );
   const results: number[] = [];
   let pointer = 0;
-  let lastValue = 0;
 
   for (const day of days) {
+    const dayStart = startOfDay(day).getTime();
     const dayEnd = addDays(day, 1).getTime();
+    let maxValue = 0;
+    let lastValueBeforeDay = 0;
+
+    let localPointer = pointer;
+    while (localPointer < sorted.length) {
+      const entry = sorted[localPointer];
+      const ts = new Date(entry.last_changed).getTime();
+      if (ts >= dayStart) {
+        break;
+      }
+      const value = parseNumber(entry.state);
+      if (typeof value === 'number') {
+        lastValueBeforeDay = Math.max(lastValueBeforeDay, Math.round(value));
+      }
+      localPointer++;
+    }
+
+    pointer = localPointer;
+
     while (pointer < sorted.length) {
       const entry = sorted[pointer];
       const ts = new Date(entry.last_changed).getTime();
@@ -155,11 +174,17 @@ const computeDailySteps = (entries: HaStateEntity[] | undefined, days: Date[]) =
       }
       const value = parseNumber(entry.state);
       if (typeof value === 'number') {
-        lastValue = Math.max(lastValue, Math.round(value));
+        const rounded = Math.round(value);
+        maxValue = Math.max(maxValue, rounded);
       }
       pointer++;
     }
-    results.push(lastValue);
+
+    if (maxValue === 0 && lastValueBeforeDay > 0) {
+      maxValue = lastValueBeforeDay;
+    }
+
+    results.push(maxValue);
   }
 
   return results;

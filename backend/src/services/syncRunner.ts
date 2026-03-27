@@ -49,10 +49,10 @@ export const runSyncJob = async (params: SyncRunnerParams) => {
     const finalEnd = addDays(startOfDay(params.toDate), 1);
 
     while (cursor < finalEnd) {
-      const dayEnd = addDays(cursor, 1);
+      const chunkEnd = addDays(cursor, 1);
       const chunkHistory = await client.fetchHistory({
         from: cursor,
-        to: dayEnd,
+        to: chunkEnd,
         entityIds
       });
 
@@ -65,7 +65,7 @@ export const runSyncJob = async (params: SyncRunnerParams) => {
         historyMap.get(entityId)!.push(...series);
       }
 
-      cursor = dayEnd;
+      cursor = chunkEnd;
     }
 
     const mergedHistory: HistoryResponse = [];
@@ -108,17 +108,6 @@ export const runSyncJob = async (params: SyncRunnerParams) => {
 
       if (!existing) {
         await params.prisma.dailyHealthSnapshot.create({ data: payload });
-        continue;
-      }
-
-      const hasNewData =
-        (snapshot.steps ?? 0) > 0 ||
-        typeof snapshot.weight === 'number' ||
-        typeof snapshot.distanceKm === 'number' ||
-        typeof snapshot.activeMinutes === 'number' ||
-        typeof snapshot.calories === 'number';
-
-      if (!hasNewData) {
         continue;
       }
 
