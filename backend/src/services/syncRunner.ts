@@ -106,8 +106,21 @@ export const runSyncJob = async (params: SyncRunnerParams) => {
         source: params.type.toLowerCase()
       };
 
+      const hasAnyData =
+        snapshot.hasStepData ||
+        typeof snapshot.weight === 'number' ||
+        typeof snapshot.distanceKm === 'number' ||
+        typeof snapshot.activeMinutes === 'number' ||
+        typeof snapshot.calories === 'number';
+
       if (!existing) {
-        await params.prisma.dailyHealthSnapshot.create({ data: payload });
+        if (hasAnyData) {
+          await params.prisma.dailyHealthSnapshot.create({ data: payload });
+        }
+        continue;
+      }
+
+      if (!hasAnyData) {
         continue;
       }
 

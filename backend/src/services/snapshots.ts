@@ -17,6 +17,7 @@ export interface DailySnapshotResult {
   distanceKm?: number;
   activeMinutes?: number;
   calories?: number;
+  hasStepData?: boolean;
 }
 
 const parseNumber = (value: string) => {
@@ -108,7 +109,7 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
       ? Number((weightValues.reduce((a, b) => a + b, 0) / weightValues.length).toFixed(2))
       : undefined;
 
-    const steps = stepSeries[index] ?? 0;
+    const { value: steps, hasData: hasStepData } = stepSeries[index] ?? { value: 0, hasData: false };
 
     let distanceKm: number | undefined;
     if (typeof aggregate?.distance === 'number') {
@@ -126,7 +127,8 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
       weight,
       distanceKm,
       activeMinutes,
-      calories
+      calories,
+      hasStepData
     });
   });
 
@@ -135,19 +137,20 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
 
 const computeDailySteps = (entries: HaStateEntity[] | undefined, days: Date[]) => {
   if (!entries || !entries.length) {
-    return days.map(() => 0);
+    return days.map(() => ({ value: 0, hasData: false }));
   }
 
   const sorted = [...entries].sort(
     (a, b) => new Date(a.last_changed).getTime() - new Date(b.last_changed).getTime()
   );
-  const results: number[] = [];
+  const results: { value: number; hasData: boolean }[] = [];
   let pointer = 0;
 
   for (const day of days) {
     const dayStart = startOfDay(day).getTime();
     const dayEnd = addDays(day, 1).getTime();
     let maxValue = 0;
+    let hasData = false;
 
     while (pointer < sorted.length) {
       const entry = sorted[pointer];
@@ -163,11 +166,12 @@ const computeDailySteps = (entries: HaStateEntity[] | undefined, days: Date[]) =
       if (typeof value === 'number') {
         const rounded = Math.round(value);
         maxValue = Math.max(maxValue, rounded);
+        hasData = true;
       }
       pointer++;
     }
 
-    results.push(maxValue);
+    results.push({ value: maxValue, hasData });
   }
 
   return results;
