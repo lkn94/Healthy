@@ -189,11 +189,15 @@ const requirementText = (module: (typeof collections.value.inventory)[number]) =
 
 .blueprint-plan {
   display: grid;
-  grid-template-columns: repeat(3, minmax(160px, 1fr));
+  grid-template-columns: 1fr;
   grid-auto-rows: minmax(180px, auto);
   grid-template-areas:
-    'base living climate'
-    'security automation ai';
+    'base'
+    'living'
+    'climate'
+    'security'
+    'automation'
+    'ai';
   gap: 16px;
   background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.08), transparent 60%);
   padding: 16px;
@@ -248,13 +252,22 @@ const requirementText = (module: (typeof collections.value.inventory)[number]) =
   font-size: 1.8rem;
 }
 
-@media (max-width: 640px) {
+@media (min-width: 768px) {
   .blueprint-plan {
-    grid-template-columns: repeat(2, minmax(140px, 1fr));
+    grid-template-columns: repeat(2, minmax(200px, 1fr));
     grid-template-areas:
       'base living'
       'climate security'
       'automation ai';
+  }
+}
+
+@media (min-width: 1024px) {
+  .blueprint-plan {
+    grid-template-columns: repeat(3, minmax(200px, 1fr));
+    grid-template-areas:
+      'base living climate'
+      'security automation ai';
   }
 }
 </style>
