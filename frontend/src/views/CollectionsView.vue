@@ -9,7 +9,7 @@
           Energie entsteht durch Schritte, Automation durch Tages-Challenges und KI-Punkte über große Lifetime-Meilensteine.
           Jede neue Stufe schaltet sichtbare Module in deinem virtuellen Zuhause frei.
         </p>
-        <div class="grid grid-cols-3 gap-4 text-center">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
           <div class="rounded-2xl border border-white/10 bg-black/20 p-3">
             <p class="text-xs uppercase tracking-[0.4em] text-white/60">Energie</p>
             <p class="text-2xl font-display text-white">{{ collections.energyPoints.toLocaleString('de-DE') }}</p>
