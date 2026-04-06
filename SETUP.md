@@ -1,17 +1,19 @@
-# Healthy – Installations- & Einrichtungsleitfaden
+# Healthy – Installation & Setup Guide
 
-Dieses Dokument führt dich einmal komplett von der Vorbereitung über den ersten Start bis zu den wichtigsten Checks nach dem Deployment.
+*German version: [SETUP.de.md](SETUP.de.md).*
 
-## 1. Voraussetzungen
+This step-by-step guide covers everything from prerequisites to Portainer deployment and troubleshooting.
 
-| Komponente | Empfehlung |
+## 1. Requirements
+
+| Component | Recommendation |
 | --- | --- |
-| Home Assistant | Aktuelle Version mit aktiviertem `api`/`recorder`, ausreichend Historie (`purge_keep_days` ≥ 30) |
-| Node / npm | Für lokalen Dev: Node 20+, npm 10+ |
-| Docker / Compose | Für Deployment (ein Container) |
-| Browser | Chromium/Firefox/Safari (für UI) |
+| Home Assistant | Current release with `api`/`recorder` enabled, `recorder.purge_keep_days ≥ 30` |
+| Node / npm | Node 20+, npm 10+ (for local dev) |
+| Docker / Compose | Required for the all-in-one container |
+| Browser | Chromium / Firefox / Safari |
 
-## 2. Repository & Dateien
+## 2. Clone Repo & Prepare Files
 
 ```bash
 git clone https://github.com/lkn94/Healthy.git
@@ -19,98 +21,97 @@ cd Healthy
 cp .env.example .env
 ```
 
-Die `.env` im Repo-Root wird von Backend **und** Frontend genutzt.
+The root `.env` is consumed by both backend and frontend builds.
 
-## 3. Environment konfigurieren
+## 3. Configure Environment
 
-| Variable | Beispiel | Hinweis |
+| Var | Example | Notes |
 | --- | --- | --- |
-| `APP_PORT` | `3000` | Muss offen sein, wenn Proxy davor sitzt |
-| `JWT_SECRET` | `supersecretvalue123` | min. 16 Zeichen |
-| `ENCRYPTION_KEY` | `32charslongencryptionkey1234567` | genau 32 Zeichen |
-| `DB_URL` | `file:../../data/app.db` | nicht ändern, wenn Docker-Volume genutzt wird |
-| `VITE_API_URL` | `/api` | relative URL im Docker-Build |
-| `SYNC_INTERVAL_MINUTES` | `30` | Scheduler-Intervall |
+| `APP_PORT` | `3000` | Change if port conflicts |
+| `JWT_SECRET` | `supersecretvalue123` | ≥16 characters |
+| `ENCRYPTION_KEY` | `32charslongencryptionkey1234567` | exactly 32 chars for AES-256-GCM |
+| `DB_URL` | `file:../../data/app.db` | keep as-is for Docker volume |
+| `VITE_API_URL` | `/api` | relative path for production build |
+| `SYNC_INTERVAL_MINUTES` | `30` | scheduler interval |
 
-## 4. Deployment per Docker Compose
+## 4. Docker Compose Deployment
 
 ```bash
 docker compose up --build -d
 ```
 
-- Service erreichbar unter `http://localhost:3000`
-- `./data` wird als Volume gemountet (SQLite-DB). Backup nicht vergessen!
+- App available at `http://localhost:3000`
+- `./data` is mounted as volume → don’t delete it unless you want to wipe the DB
 
 ### Portainer
 
-1. Stack → `Add Stack`
-2. Inhalt von `docker-compose.yml` einfügen
-3. Unter *Environment variables* die `.env`-Werte setzen
-4. Deploy Stack → Container startet automatisch
+1. *Stacks → Add stack*
+2. Paste the content of `docker-compose.yml`
+3. Define env vars in the UI (Portainer won’t create files)
+4. Deploy stack – container starts automatically
 
-## 5. Benutzer & Login
+## 5. Create User & Log In
 
-1. Healthy öffnen (`/`)
-2. `Registrieren` auswählen → Name, Mail, Passwort
-3. Nach Login landet man im Dashboard
+1. Open Healthy UI
+2. Click **Registrieren/Register** and create the first user
+3. After login you land on the overview dashboard
 
-## 6. Home Assistant anbinden
+## 6. Connect Home Assistant
 
-1. **Token erstellen** – In HA unter *Profil → Long-lived Access Tokens* → `Create token`
-2. **Verbindung anlegen** – Healthy → Einstellungen → „Verbindungen“
-   - Name: frei wählbar
-   - Base URL: `https://example.duckdns.org:8123` (inkl. Schema & Port)
-   - Token: eben generiertes Token
-3. Speichern → Healthy testet die Verbindung automatisch (Status „available“)
+1. **Create token** – HA → Profile → Long-Lived access tokens → “Create token”
+2. **Add connection** – Healthy → Settings → Connections
+   - Name: free choice
+   - Base URL: `https://your-ha.duckdns.org:8123`
+   - Token: paste the long-lived token
+3. Save – status switches to “available” when the connection tests successfully
 
-## 7. Sensor-Zuordnung
+## 7. Map Sensors
 
-1. Im Einstellungsbereich „Sensor-Zuordnung“ auswählen
-2. `sensor.body_lukas_schritte_heute` etc. wählen
-3. Einheiten werden angezeigt (z. B. „Meter oder km“)
-4. Speichern → Mapping landet verschlüsselt in der DB
+1. Scroll to “Sensor-Zuordnung / Sensor mapping”
+2. Select the HA entities for steps, distance, weight, active minutes, calories (unit hints are shown)
+3. Save mapping – encrypted in the DB
 
-## 8. Historischen Import starten
+## 8. Run Historical Import
 
-1. Datum auswählen (z. B. 2024-01-01)
-2. Button „Historie importieren“ klicken
-3. Jobstatus erscheint unterhalb (Import-Zeitraum, importierte Tage)
-4. Alternativ: `POST /api/connections/:id/import` via API
+1. Choose a start date (e.g., `2024-01-01`)
+2. Click **Historie importieren**
+3. Healthy fetches `/api/history/period`, computes daily snapshots, and displays the job status
+4. API alternative: `POST /api/connections/:id/import` with `fromDate`
 
-> Tipp: Der Scheduler importiert automatisch die letzten Tage erneut, falls du später Sensoren wechselst.
+> The scheduler also re-imports the last few days automatically, so changing sensors later is safe.
 
-## 9. Regelbetrieb & Überwachung
+## 9. Operations & Monitoring
 
-- **Scheduler** – Läuft alle 30 min + nightly. In Logs (`docker logs healthy`) siehst du `sync completed` Meldungen.
-- **Sync erzwingen** – Button „Sofort synchronisieren“ oder `POST /api/connections/:id/sync`
-- **Log prüfen** – Home Assistant muss Historie liefern (siehe `/api/history/period`). Fehlen Daten, Recorder-Retention erhöhen.
+- **Scheduler**: runs every 30 minutes plus shortly after midnight. Logs show `sync completed` messages.
+- **Manual sync**: use “Sofort synchronisieren” or `POST /api/connections/:id/sync`.
+- **Check HA history**: if imports stay empty, use `GET /api/history/period` in HA to confirm data exists (extend recorder retention if not).
 
-## 10. Häufige Stolpersteine
+## 10. Common Issues
 
-| Problem | Ursache | Lösung |
+| Symptom | Cause | Fix |
 | --- | --- | --- |
-| Schritte bleiben bei 0 | HA liefert keine Historie (Recorder-Purge) | `purge_keep_days` erhöhen, Import erneut starten |
-| Zugriff verweigert | Token oder URL falsch | Long-Lived Token neu erstellen, URL inkl. `https://` setzen |
-| Docker-Container stoppt sofort | Env fehlt/fehlerhaft | `docker compose logs` prüfen, `.env` vervollständigen |
-| Frontend findet API nicht | Proxy/URL falsch | `VITE_API_URL` prüfen, Browser-Konsole öffnen |
+| Day remains at 0 | HA recorder purged history | Increase `purge_keep_days`, re-run import |
+| `Access denied` from HA | Wrong base URL or expired token | Generate new long-lived token, include schema/port |
+| Container exits immediately | Missing env vars | `docker compose logs`, re-check `.env` |
+| Frontend can’t reach API | Wrong `VITE_API_URL` or proxy | Use `/api` in Docker, `http://localhost:3000/api` in dev |
 
-## 11. Manuelle Datenkorrektur
+## 11. Manual Data Corrections
 
-- SQLite-DB liegt unter `data/app.db`
-- Prisma Studio:
+- SQLite DB located at `data/app.db`
+- Use Prisma Studio:
 
   ```bash
   cd backend
   npx prisma studio
   ```
 
-- Tabelle `dailyHealthSnapshot` enthält Tageswerte. Manueller Fix möglich, falls HA keine Historie mehr hat.
+- Table `dailyHealthSnapshot` holds daily aggregates; adjust values directly if HA history is gone.
 
-## 12. Backup & Update
+## 12. Backup & Updates
 
-1. Container stoppen: `docker compose down`
-2. `data/app.db` sichern
-3. Repo aktualisieren (`git pull`), ggf. `npm run migrate:deploy`
+1. Stop container: `docker compose down`
+2. Backup `data/app.db`
+3. `git pull`, run `npm run migrate:deploy` inside `backend/` if schema changed
 4. `docker compose up --build -d`
 
-Damit hast du alle Schritte, um Healthy frisch aufzusetzen oder zu aktualisieren. Viel Erfolg beim Launch! 🎉
+All set! 🎉

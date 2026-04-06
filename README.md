@@ -1,49 +1,52 @@
 # Healthy – Smart Home Health Dashboard
 
-Healthy ist die Premium-Oberfläche für alle, die ihre Gesundheitsdaten direkt aus Home Assistant visualisieren möchten. Das Projekt besteht aus einem Fastify/Prisma-Backend mit Scheduler und einem Vue-3-Frontend, das Collections, Leaderboard, Kalorien-Insights und den EVA-Blueprint darstellt. Ein einziger Docker-Container reicht aus, um Backend und Frontend zu deployen.
+*Available in German: [README.de.md](README.de.md).*
 
-> Für eine Story-getriebene Produktbeschreibung schau in `SMART-HOME-GUIDE.md`.
+Healthy is a full-stack Health Dashboard for Home Assistant power users. It connects to your sensors via the HA REST API, stores normalized daily snapshots (Fastify + Prisma + SQLite) and renders a premium Vue 3 interface with Collections Blueprint, Leaderboard, EVA guidance, adaptive challenges, and calorie insights – all deployable via a single Docker container.
 
-## Features
+> Want the storytelling version? Check out `SMART-HOME-GUIDE.md`.
 
-- 🔐 **Sichere HA-Verbindungen** – Tokens werden mit AES-256-GCM verschlüsselt, CRUD für mehrere Instanzen.
-- 📡 **Sensor-Mapping** – Schritte, Distanz, Gewicht, aktive Minuten, Kalorien – inkl. Einheitenhinweisen.
-- 📈 **Automatische Imports & Scheduler** – Historischer Import + Cron (alle 30 min & nightly) über den Home-Assistant-Historien-Endpoint.
-- 🏗 **Collections Blueprint** – EVA führt durch Räume, Requirements & Fortschritt, mobile-first optimiert.
-- 🏆 **Leaderboard & Daily Challenges** – Opt-In Bestenliste, adaptive Tagesziele, Kalorien-Panel mit Referenzen.
+## Feature Highlights
 
-## Architektur & Stack
+- 🔐 **Secure HA connections** – Multiple instances, AES-256-GCM encrypted tokens.
+- 📡 **Sensor mapping** – Steps, distance, weight, active minutes, calories with unit hints.
+- 📈 **Historical import & scheduler** – Imports via `/api/history/period`, cron every 30 min + nightly.
+- 🏗 **Collections Blueprint** – EVA narrates requirements & progress, responsive layout.
+- 🏆 **Leaderboard & daily challenges** – Opt-in visibility, adaptive goals, calorie panel & references.
 
-- **Backend**: Fastify · Prisma · SQLite (WAL) · node-cron · JWT Auth · AES-256-GCM
-- **Frontend**: Vue 3 · Pinia · Vite · Tailwind CSS · ECharts
-- **Deployment**: Dockerfile (Multi-Stage) + `docker-compose.yml`, Volume `./data` für `app.db`
+## Architecture
+
+- **Backend:** Fastify · Prisma · SQLite (WAL) · node-cron · JWT · AES-256-GCM
+- **Frontend:** Vue 3 · Pinia · Vite · Tailwind CSS · ECharts
+- **Deployment:** Multi-stage Dockerfile + `docker-compose.yml`, persistent `./data/app.db`
 
 ```
 Healthy/
 ├─ backend/              # Fastify API, Scheduler, Prisma Client
 ├─ frontend/             # Vue 3 SPA (Vite)
-├─ data/                 # Persistente SQLite DB (Volume)
-├─ docker-compose.yml    # Ein Container für Frontend + Backend
-├─ Dockerfile            # Multi-Stage Build
-├─ .env.example          # Gemeinsame Env-Referenz
-└─ SMART-HOME-GUIDE.md   # Smart-Home Story & Nutzenbeschreibung
+├─ data/                 # SQLite volume
+├─ docker-compose.yml    # Single-container deployment
+├─ Dockerfile            # Multi-stage build (frontend → backend)
+├─ .env.example          # Shared env reference
+├─ README.de.md          # German docs
+└─ SETUP.md / SETUP.de.md# Installation guides (EN/DE)
 ```
 
 ## Quick Start (Docker / Portainer)
 
-1. **Env-Datei** – `.env.example` kopieren und anpassen. Wichtig: `DB_URL=file:../../data/app.db`, damit das Volume greift.
-2. **Container starten**
+1. Copy `.env.example` to `.env` and fill in secrets (`DB_URL=file:../../data/app.db` must stay).
+2. Build & run:
 
    ```bash
    docker compose up --build -d
    ```
 
-3. **Healthy öffnen** – `http://localhost:3000`, neuen Account registrieren.
-4. **Home Assistant koppeln** – Long-Lived Token aus HA, Verbindung -> Sensoren -> Import (siehe unten).
+3. Open `http://localhost:3000`, register the first user.
+4. Add your Home Assistant connection (token, base URL), map sensors, trigger import.
 
-> Portainer: Stack mit `docker-compose.yml` anlegen, `.env` im Stack pflegen (Portainer legt keine Dateien an). Volume `./data:/app/data` nicht vergessen.
+> Portainer: create a Stack with `docker-compose.yml`, set env vars in the UI (no files created). Mount `./data:/app/data` for persistence.
 
-## Lokales Dev-Setup
+## Local Development
 
 ```bash
 git clone https://github.com/lkn94/Healthy.git
@@ -55,80 +58,83 @@ npm install
 npm run migrate:dev
 npm run dev
 
-# Frontend (neues Terminal)
+# Frontend (new terminal)
 cd ../frontend
 npm install
 npm run dev -- --host
 ```
 
-- Backend: `http://localhost:3000`
-- Frontend: `http://localhost:5173` (Proxy auf `/api`)
+- API: `http://localhost:3000`
+- SPA: `http://localhost:5173` (proxying `/api`)
 
-## Environment Variablen
+## Environment Variables
 
-| Variable | Beschreibung |
+| Key | Description |
 | --- | --- |
-| `APP_PORT` | Port des Fastify Servers (Default 3000) |
-| `JWT_SECRET` | Mindestens 16 Zeichen für Signaturen |
-| `ENCRYPTION_KEY` | 32 Zeichen für AES-256-GCM Tokenverschlüsselung |
-| `DB_URL` | Prisma-Verbindungsstring, z. B. `file:../../data/app.db` |
-| `SYNC_INTERVAL_MINUTES` | Cron-Intervall für Auto-Sync (Standard 30) |
-| `DEFAULT_DAILY_GOAL` | Anzeige des Tagesziels im UI |
-| `DEFAULT_STEP_LENGTH_METERS` | Schrittweite für Distanz-Fallback |
-| `VITE_API_URL` | Backend-Endpunkt für das Frontend (`/api` im Docker, `http://localhost:3000/api` im Dev) |
+| `APP_PORT` | Fastify listen port (default 3000) |
+| `JWT_SECRET` | ≥16 chars for JWT signatures |
+| `ENCRYPTION_KEY` | 32 chars for AES-256-GCM token encryption |
+| `DB_URL` | Prisma DSN, e.g. `file:../../data/app.db` |
+| `SYNC_INTERVAL_MINUTES` | Scheduler interval (default 30) |
+| `DEFAULT_DAILY_GOAL` | UI hint for steps |
+| `DEFAULT_STEP_LENGTH_METERS` | Fallback for distance calculation |
+| `VITE_API_URL` | Frontend base URL (`/api` in Docker, `http://localhost:3000/api` in dev) |
 
-## Home Assistant vorbereiten & verbinden
+## Home Assistant Onboarding
 
-1. **Token erzeugen** – In HA unter *Profil → Long-Lived Access Tokens* ein neues Token erstellen.
-2. **Verbindung anlegen** – Healthy → Einstellungen → „Verbindungen“ → Name, `Base URL` (`https://ha.domain:8123`) und Token speichern.
-3. **Sensoren zuordnen** – „Sensor-Zuordnung“ öffnen, Entitäten für Schritte (`state_class: total`), Distanz, Gewicht, aktive Minuten und Kalorien wählen. Einheiten stehen direkt am Dropdown.
-4. **Import starten** – Zeitraum auswählen (z. B. `2024-01-01`), „Historie importieren“. Healthy ruft `/api/history/period` auf, errechnet Tageswerte und legt Snapshots an.
-5. **Automatik prüfen** – Der Scheduler triggert alle Verbindungen alle 30 min sowie kurz nach Mitternacht. Status über „Sync-Status“ sichtbar.
+1. **Create token** – Profile → Long-lived access tokens.
+2. **Add connection** – Healthy → Settings → Connections → Name, HA base URL (with schema/port), token.
+3. **Map sensors** – Steps (kumulativ pro Tag), distance, weight, active minutes, calories.
+4. **Run import** – Choose a start date, click “Historie importieren” → Healthy fetches `/api/history/period` and stores daily snapshots.
+5. **Scheduler** – Cron job syncs every 30 min + nightly. Monitor via “Sync-Status”.
 
-## Datenfluss (vereinfacht)
+Detailed walkthrough (incl. Portainer, troubleshooting) lives in [SETUP.md](SETUP.md) → German version: [SETUP.de.md](SETUP.de.md).
 
-1. **Sync Runner** holt History (in Tages-Chunks) → berechnet Tagesmax (Schritte) + Aggregationen.
-2. **Snapshots** landen in `daily_health_snapshot` (SQLite) und speisen Dashboard/Collections.
-3. **Scheduler** führt denselben Job periodisch aus; manuelle Syncs/Imports triggern dieselbe Pipeline.
+## Data Flow
 
-## Nützliche npm-Scripts
+1. Sync runner fetches HA history in day-sized chunks.
+2. `buildDailySnapshots` normalizes data, writes to `daily_health_snapshot`.
+3. Frontend stores read-only API responses (Pinia) and renders charts/collections.
 
-| Pfad | Script | Zweck |
+## Useful npm Scripts
+
+| Path | Script | Purpose |
 | --- | --- | --- |
 | `backend/` | `npm run dev` | Fastify + ts-node-dev |
-|  | `npm run build` | TypeScript Build |
-|  | `npm run migrate:dev` · `migrate:deploy` | Prisma Migrationen |
-|  | `npm run generate` | Prisma Client neu erzeugen |
-| `frontend/` | `npm run dev` | Vite Dev Server |
-|  | `npm run build` | Produktionsbuild |
-|  | `npm run preview` | Build-Vorschau |
+|  | `npm run build` | Compile to `dist/` |
+|  | `npm run migrate:dev` / `migrate:deploy` | Prisma migrations |
+|  | `npm run generate` | Regenerate Prisma client |
+| `frontend/` | `npm run dev` | Vite dev server |
+|  | `npm run build` | Production build |
+|  | `npm run preview` | Preview built SPA |
 
-## API-Überblick
+## API Overview
 
-| Route | Zweck |
+| Route | Purpose |
 | --- | --- |
-| `POST /api/auth/register` · `login` | Benutzerverwaltung |
-| `GET/POST /api/connections` | Home-Assistant-Verbindungen und Token |
-| `GET /api/connections/:id/entities` | Verfügbare Entitäten aus HA |
-| `POST /api/connections/:id/mapping` | Sensor-Mapping speichern |
-| `POST /api/connections/:id/import` | Historischen Import auslösen |
-| `POST /api/connections/:id/sync` | Sofort-Sync starten |
-| `GET /api/connections/:id/sync-status` | Jobstatus & Kennzahlen |
-| `GET /api/dashboard/*` | Datenquellen für Overview, Progress, Body, Kalorien, Collections |
-| `PATCH /api/user/settings|profile|password` | Leaderboard-Opt-in, Anzeigename, Passwort |
+| `POST /api/auth/register` · `login` | Authentication |
+| `GET/POST /api/connections` | Manage HA instances |
+| `GET /api/connections/:id/entities` | List HA entities |
+| `POST /api/connections/:id/mapping` | Persist sensor mapping |
+| `POST /api/connections/:id/import` | Kick off historical import |
+| `POST /api/connections/:id/sync` | Immediate sync |
+| `GET /api/connections/:id/sync-status` | Job state + stats |
+| `GET /api/dashboard/*` | Overview, progress, body, calories, collections |
+| `PATCH /api/user/settings|profile|password` | Leaderboard opt-in, display name, password |
 
-## Troubleshooting & Tipps
+## Troubleshooting
 
-- **HA liefert keine Historie** – `recorder.purge_keep_days` erhöhen, Sensor sicherstellen. Healthy überschreibt alte Tage nur, wenn HA Daten liefert.
-- **`Access denied`** – Long-Lived Token prüfen, `baseUrl` inkl. https/schema eintragen, ggf. Zertifikat akzeptieren.
-- **Scheduler hängt** – `GET /connections/:id/sync-status` prüfen, Container-Logs ansehen. Bei Bedarf `POST /sync` erneut senden.
-- **Frontend erreicht API nicht** – `VITE_API_URL` im Build prüfen. Im Docker-Setup `/api`, im lokalen Vite `http://localhost:3000/api`.
-- **Port belegt** – `APP_PORT` ändern + Compose neu starten.
+- **No history pulled** – Increase HA `recorder.purge_keep_days`, ensure the sensor reports daily values.
+- **“Access denied”** – Token expired or wrong URL; recreate long-lived token, include schema & port.
+- **Scheduler stuck on “syncing”** – Check `/sync-status`, inspect backend logs, trigger manual sync if needed.
+- **Frontend can’t reach API** – Verify `VITE_API_URL`. In Docker it must be `/api`; in dev use the full backend origin.
+- **Port conflict** – Change `APP_PORT`, rerun compose.
 
-## Weiterführende Dokumente
+## Further Reading
 
-- `SMART-HOME-GUIDE.md` – Marketing- und Nutzenbeschreibung
-- `backend/src/services/maintenance.ts` – Datenpflege + Auto-Rebuild
-- `frontend/src/views/*.vue` – Screens (Collections, Leaderboard, Settings, etc.)
+- `SMART-HOME-GUIDE.md` – Product story & marketing copy
+- `README.de.md` – German documentation
+- `SETUP.md` / `SETUP.de.md` – Installation how-to (EN/DE)
+- `backend/src/services/maintenance.ts` – Automatic data maintenance & resync logic
 
-Viel Spaß beim Veröffentlichen! Wenn du eine ausführliche Schritt-für-Schritt-Anleitung brauchst, hilft zusätzlich `docs/SETUP.md` (siehe unten).
+Happy launching! 🚀
