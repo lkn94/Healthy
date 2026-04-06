@@ -6,6 +6,8 @@ Healthy is a full-stack Health Dashboard for Home Assistant power users. It conn
 
 > Want the storytelling version? Check out `SMART-HOME-GUIDE.md`.
 
+> Transparency: this is an AI-generated practice project – details in [AI-TRANSPARENCY.md](AI-TRANSPARENCY.md).
+
 ## Feature Highlights
 
 - 🔐 **Secure HA connections** – Multiple instances, AES-256-GCM encrypted tokens.

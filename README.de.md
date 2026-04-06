@@ -6,6 +6,8 @@ Healthy ist die Premium-Oberfläche für alle, die ihre Gesundheitsdaten direkt 
 
 > Für eine Story-getriebene Produktbeschreibung schau in `SMART-HOME-GUIDE.md`.
 
+> Transparenz: Dieses Projekt wurde vollständig per KI erstellt – siehe [AI-TRANSPARENCY.md](AI-TRANSPARENCY.md).
+
 ## Features
 
 - 🔐 **Sichere HA-Verbindungen** – Tokens werden mit AES-256-GCM verschlüsselt, CRUD für mehrere Instanzen.
