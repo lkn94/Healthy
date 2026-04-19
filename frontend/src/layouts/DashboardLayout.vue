@@ -104,13 +104,14 @@
 </template>
 
 <script setup lang="ts">
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { computed, ref, watch } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { useConnectionsStore } from '../stores/connections';
 import { ChartBarIcon, SparklesIcon, ClockIcon, Cog6ToothIcon, HeartIcon, FlagIcon, FireIcon, BuildingOfficeIcon, TrophyIcon } from '@heroicons/vue/24/outline';
 
 const route = useRoute();
+const router = useRouter();
 const auth = useAuthStore();
 const connections = useConnectionsStore();
 const mobileMenuOpen = ref(false);
@@ -144,6 +145,7 @@ const navItems = [
 
 const handleLogout = () => {
   auth.logout();
+  router.push('/login');
 };
 
 const toggleMobileMenu = () => {
