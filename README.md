@@ -16,6 +16,16 @@ Healthy is a full-stack Health Dashboard for Home Assistant power users. It conn
 - 🏗 **Collections Blueprint** – EVA narrates requirements & progress, responsive layout.
 - 🏆 **Leaderboard & daily challenges** – Opt-in visibility, adaptive goals, calorie panel & references.
 
+## Screenshots
+
+| Login | Dashboard |
+| --- | --- |
+| ![Healthy login screen](screenshots/Login.png) | ![Healthy dashboard overview](screenshots/Dashboard.png) |
+
+| Progress | Settings |
+| --- | --- |
+| ![Healthy progress view](screenshots/Fortschritt.png) | ![Healthy settings and sensor mapping](screenshots/Einstellungen.png) |
+
 ## Architecture
 
 - **Backend:** Fastify · Prisma · SQLite (WAL) · node-cron · JWT · AES-256-GCM

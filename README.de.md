@@ -16,6 +16,16 @@ Healthy ist die Premium-Oberfläche für alle, die ihre Gesundheitsdaten direkt 
 - 🏗 **Collections Blueprint** – EVA führt durch Räume, Requirements & Fortschritt, mobile-first optimiert.
 - 🏆 **Leaderboard & Daily Challenges** – Opt-In Bestenliste, adaptive Tagesziele, Kalorien-Panel mit Referenzen.
 
+## Screenshots
+
+| Login | Dashboard |
+| --- | --- |
+| ![Healthy Login Bildschirm](screenshots/Login.png) | ![Healthy Dashboard Übersicht](screenshots/Dashboard.png) |
+
+| Fortschritt | Einstellungen |
+| --- | --- |
+| ![Healthy Fortschrittsansicht](screenshots/Fortschritt.png) | ![Healthy Einstellungen und Sensor-Mapping](screenshots/Einstellungen.png) |
+
 ## Architektur & Stack
 
 - **Backend**: Fastify · Prisma · SQLite (WAL) · node-cron · JWT Auth · AES-256-GCM
