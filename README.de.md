@@ -2,6 +2,8 @@
 
 *English version: [README.md](README.md).* 
 
+**Kurzbeschreibung:** KI-gebautes Health-Dashboard für Home Assistant, das Rohdaten aus Sensoren in tägliche Insights, gamifizierte Collections und eine datenschutzfreundliche Fitness-Zentrale verwandelt.
+
 Healthy ist die Premium-Oberfläche für alle, die ihre Gesundheitsdaten direkt aus Home Assistant visualisieren möchten. Das Projekt besteht aus einem Fastify/Prisma-Backend mit Scheduler und einem Vue-3-Frontend, das Collections, Leaderboard, Kalorien-Insights und den EVA-Blueprint darstellt. Ein einziger Docker-Container reicht aus, um Backend und Frontend zu deployen.
 
 > Für eine Story-getriebene Produktbeschreibung schau in `SMART-HOME-GUIDE.md`.

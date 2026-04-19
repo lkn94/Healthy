@@ -2,6 +2,8 @@
 
 *Available in German: [README.de.md](README.de.md).*
 
+**Tagline:** AI-built health dashboard for Home Assistant that turns raw sensor history into motivating daily insights, gamified collections, and a privacy-first personal fitness hub.
+
 Healthy is a full-stack Health Dashboard for Home Assistant power users. It connects to your sensors via the HA REST API, stores normalized daily snapshots (Fastify + Prisma + SQLite) and renders a premium Vue 3 interface with Collections Blueprint, Leaderboard, EVA guidance, adaptive challenges, and calorie insights – all deployable via a single Docker container.
 
 > Want the storytelling version? Check out `SMART-HOME-GUIDE.md`.
