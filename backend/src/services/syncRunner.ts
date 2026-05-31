@@ -1,10 +1,10 @@
 import type { PrismaClient } from '@prisma/client';
-import { startOfDay, addDays } from 'date-fns';
 import { decrypt } from '../utils/crypto';
 import { HomeAssistantClient, type HaStateEntity, type HistoryResponse } from './homeAssistant';
 import { buildDailySnapshots } from './snapshots';
 import { recalculateLifetimeStats } from './stats';
 import { env } from '../env';
+import { getDayLabelsBetween, getZonedDayBounds, getZonedDayLabel } from './timezone';
 
 export interface SyncRunnerParams {
   prisma: PrismaClient;
@@ -13,6 +13,7 @@ export interface SyncRunnerParams {
   type: 'IMPORT' | 'SYNC' | 'SCHEDULED';
   fromDate: Date;
   toDate: Date;
+  fromDayLabel?: string;
 }
 
 export const runSyncJob = async (params: SyncRunnerParams) => {
@@ -35,6 +36,7 @@ export const runSyncJob = async (params: SyncRunnerParams) => {
   try {
     const token = decrypt(connection.accessTokenEncrypted);
     const client = new HomeAssistantClient(connection.baseUrl, token);
+    const timeZone = await client.fetchTimeZone();
 
     const entityIds = [
       connection.mapping.stepsEntityId,
@@ -45,14 +47,15 @@ export const runSyncJob = async (params: SyncRunnerParams) => {
     ].filter(Boolean) as string[];
 
     const historyMap = new Map<string, HaStateEntity[]>();
-    let cursor = startOfDay(params.fromDate);
-    const finalEnd = addDays(startOfDay(params.toDate), 1);
+    const firstDayLabel = params.fromDayLabel ?? getZonedDayLabel(params.fromDate, timeZone);
+    const lastDayLabel = getZonedDayLabel(params.toDate, timeZone);
+    const dayLabels = getDayLabelsBetween(firstDayLabel, lastDayLabel);
 
-    while (cursor < finalEnd) {
-      const chunkEnd = addDays(cursor, 1);
+    for (const dayLabel of dayLabels) {
+      const { start, end } = getZonedDayBounds(dayLabel, timeZone);
       const chunkHistory = await client.fetchHistory({
-        from: cursor,
-        to: chunkEnd,
+        from: start,
+        to: end,
         entityIds
       });
 
@@ -64,8 +67,6 @@ export const runSyncJob = async (params: SyncRunnerParams) => {
         }
         historyMap.get(entityId)!.push(...series);
       }
-
-      cursor = chunkEnd;
     }
 
     const mergedHistory: HistoryResponse = [];
@@ -77,16 +78,16 @@ export const runSyncJob = async (params: SyncRunnerParams) => {
     const snapshots = buildDailySnapshots({
       history: mergedHistory,
       mapping: connection.mapping,
-      from: params.fromDate,
-      to: params.toDate,
+      dayLabels,
+      timeZone,
       defaultStepLengthMeters: env.DEFAULT_STEP_LENGTH_METERS
     });
 
-    const todayStart = startOfDay(new Date()).getTime();
+    const todayLabel = getZonedDayLabel(new Date(), timeZone);
 
     for (const snapshot of snapshots) {
-      const targetDate = startOfDay(snapshot.date);
-      const targetTime = targetDate.getTime();
+      const targetDate = snapshot.date;
+      const targetLabel = targetDate.toISOString().split('T')[0];
       const existing = await params.prisma.dailyHealthSnapshot.findUnique({
         where: {
           userId_connectionId_date: {
@@ -117,13 +118,13 @@ export const runSyncJob = async (params: SyncRunnerParams) => {
         typeof snapshot.calories === 'number';
 
       if (!existing) {
-        if (hasAnyData || targetTime === todayStart) {
+        if (hasAnyData || targetLabel === todayLabel) {
           await params.prisma.dailyHealthSnapshot.create({ data: payload });
         }
         continue;
       }
 
-      if (!hasAnyData && targetTime < todayStart) {
+      if (!hasAnyData && targetLabel < todayLabel) {
         continue;
       }
 

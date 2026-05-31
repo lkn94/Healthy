@@ -1,12 +1,12 @@
-import { addDays, eachDayOfInterval, startOfDay } from 'date-fns';
 import type { SensorMapping } from '@prisma/client';
 import type { HistoryResponse, HaStateEntity } from './homeAssistant';
+import { dayLabelToUtcDate, getZonedDayBounds, getZonedDayLabel } from './timezone';
 
 export interface DailySnapshotInput {
   history: HistoryResponse;
   mapping: SensorMapping;
-  from: Date;
-  to: Date;
+  dayLabels: string[];
+  timeZone: string;
   defaultStepLengthMeters: number;
 }
 
@@ -23,13 +23,6 @@ export interface DailySnapshotResult {
 const parseNumber = (value: string) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : undefined;
-};
-
-const dayKeyFromIso = (iso: string) => {
-  const date = new Date(iso);
-  const tzOffset = date.getTimezoneOffset();
-  const local = new Date(date.getTime() - tzOffset * 60000);
-  return local.toISOString().split('T')[0];
 };
 
 export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotResult[] => {
@@ -69,14 +62,14 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
   trackEntry(params.mapping.weightEntityId, (entry) => {
     const value = parseNumber(entry.state);
     if (value === undefined) return;
-    const dayKey = dayKeyFromIso(entry.last_changed);
+    const dayKey = getZonedDayLabel(entry.last_changed, params.timeZone);
     ensureDay(dayKey).weightValues.push(value);
   });
 
   trackEntry(params.mapping.distanceEntityId, (entry) => {
     const value = parseNumber(entry.state);
     if (value === undefined) return;
-    const dayKey = dayKeyFromIso(entry.last_changed);
+    const dayKey = getZonedDayLabel(entry.last_changed, params.timeZone);
     const day = ensureDay(dayKey);
     day.distance = Math.max(day.distance ?? 0, value);
   });
@@ -84,7 +77,7 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
   trackEntry(params.mapping.activeMinutesEntityId, (entry) => {
     const value = parseNumber(entry.state);
     if (value === undefined) return;
-    const dayKey = dayKeyFromIso(entry.last_changed);
+    const dayKey = getZonedDayLabel(entry.last_changed, params.timeZone);
     const day = ensureDay(dayKey);
     day.activeMinutes = Math.max(day.activeMinutes ?? 0, Math.round(value));
   });
@@ -92,17 +85,19 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
   trackEntry(params.mapping.caloriesEntityId, (entry) => {
     const value = parseNumber(entry.state);
     if (value === undefined) return;
-    const dayKey = dayKeyFromIso(entry.last_changed);
+    const dayKey = getZonedDayLabel(entry.last_changed, params.timeZone);
     const day = ensureDay(dayKey);
     day.calories = Math.max(day.calories ?? 0, Math.round(value));
   });
 
   const snapshots: DailySnapshotResult[] = [];
-  const days = eachDayOfInterval({ start: startOfDay(params.from), end: startOfDay(params.to) });
-  const stepSeries = computeDailySteps(entityMap.get(params.mapping.stepsEntityId ?? ''), days);
+  const stepSeries = computeDailySteps(
+    entityMap.get(params.mapping.stepsEntityId ?? ''),
+    params.dayLabels,
+    params.timeZone
+  );
 
-  days.forEach((day, index) => {
-    const key = day.toISOString().split('T')[0];
+  params.dayLabels.forEach((key, index) => {
     const aggregate = dayAggregation.get(key);
     const weightValues = aggregate?.weightValues ?? [];
     const weight = weightValues.length
@@ -122,7 +117,7 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
     const calories = aggregate?.calories;
 
     snapshots.push({
-      date: day,
+      date: dayLabelToUtcDate(key),
       steps,
       weight,
       distanceKm,
@@ -135,9 +130,9 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
   return snapshots;
 };
 
-const computeDailySteps = (entries: HaStateEntity[] | undefined, days: Date[]) => {
+const computeDailySteps = (entries: HaStateEntity[] | undefined, dayLabels: string[], timeZone: string) => {
   if (!entries || !entries.length) {
-    return days.map(() => ({ value: 0, hasData: false }));
+    return dayLabels.map(() => ({ value: 0, hasData: false }));
   }
 
   const sorted = [...entries].sort(
@@ -146,9 +141,10 @@ const computeDailySteps = (entries: HaStateEntity[] | undefined, days: Date[]) =
   const results: { value: number; hasData: boolean }[] = [];
   let pointer = 0;
 
-  for (const day of days) {
-    const dayStart = startOfDay(day).getTime();
-    const dayEnd = addDays(day, 1).getTime();
+  for (const dayLabel of dayLabels) {
+    const { start, end } = getZonedDayBounds(dayLabel, timeZone);
+    const dayStart = start.getTime();
+    const dayEnd = end.getTime();
     let latestValue: number | null = null;
 
     while (pointer < sorted.length) {
