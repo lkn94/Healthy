@@ -21,7 +21,7 @@ const mappingBodySchema = z.object({
 });
 
 const importBodySchema = z.object({
-  fromDate: z.string().datetime()
+  fromDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
 });
 
 const getUserId = (request: FastifyRequest) => request.user.id;
@@ -126,7 +126,7 @@ export default async function connectionRoutes(app: FastifyInstance) {
     await requireConnection(id, userId);
     const body = importBodySchema.parse(request.body);
 
-    const fromDate = startOfDay(new Date(body.fromDate));
+    const fromDate = startOfDay(new Date(`${body.fromDate}T00:00:00.000Z`));
     const toDate = new Date();
 
     const activeJob = await findActiveJob(app.prisma, id);
@@ -143,7 +143,8 @@ export default async function connectionRoutes(app: FastifyInstance) {
         userId,
         type: 'IMPORT',
         fromDate,
-        toDate
+        toDate,
+        fromDayLabel: body.fromDate
       });
       await completeJob(app.prisma, job.id, { success: true, importedDays: days });
       return { success: true, importedDays: days };

@@ -10,6 +10,10 @@ export interface HaStateEntity {
 
 export type HistoryResponse = HaStateEntity[][];
 
+interface HaConfigResponse {
+  time_zone?: string;
+}
+
 const sanitizeBaseUrl = (url: string) => {
   if (url.endsWith('/')) {
     return url.slice(0, -1);
@@ -39,6 +43,11 @@ export class HomeAssistantClient {
   async listEntities(): Promise<HaStateEntity[]> {
     const { data } = await this.client.get<HaStateEntity[]>('/api/states');
     return data;
+  }
+
+  async fetchTimeZone() {
+    const { data } = await this.client.get<HaConfigResponse>('/api/config');
+    return data.time_zone ?? 'UTC';
   }
 
   async fetchHistory(params: {

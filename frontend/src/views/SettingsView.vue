@@ -236,7 +236,7 @@ const handleSync = async (id: string) => {
 
 const handleImport = async () => {
   if (!selectedConnectionId.value || !importDate.value) return;
-  await store.triggerImport(selectedConnectionId.value, new Date(importDate.value).toISOString());
+  await store.triggerImport(selectedConnectionId.value, importDate.value);
   syncInfo.value = await store.fetchSyncStatus(selectedConnectionId.value);
 };
 
