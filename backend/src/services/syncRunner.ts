@@ -1,6 +1,7 @@
 import type { PrismaClient } from '@prisma/client';
 import { decrypt } from '../utils/crypto';
 import { HomeAssistantClient, type HaStateEntity, type HistoryResponse } from './homeAssistant';
+import { overlayTodayLiveSteps } from './liveStepOverlay';
 import { buildDailySnapshots } from './snapshots';
 import { resolveStepWrite } from './snapshotWrites';
 import { recalculateLifetimeStats } from './stats';
@@ -76,7 +77,7 @@ export const runSyncJob = async (params: SyncRunnerParams) => {
       mergedHistory.push(entries);
     }
 
-    const snapshots = buildDailySnapshots({
+    let snapshots = buildDailySnapshots({
       history: mergedHistory,
       mapping: connection.mapping,
       dayLabels,
@@ -85,6 +86,18 @@ export const runSyncJob = async (params: SyncRunnerParams) => {
     });
 
     const todayLabel = getZonedDayLabel(new Date(), timeZone);
+
+    try {
+      const liveStepState = await client.fetchEntityState(connection.mapping.stepsEntityId);
+      snapshots = overlayTodayLiveSteps({
+        snapshots,
+        liveState: liveStepState,
+        timeZone,
+        todayLabel
+      });
+    } catch {
+      // Keep history-based sync working even if the live-state lookup fails.
+    }
 
     for (const snapshot of snapshots) {
       const targetDate = snapshot.date;

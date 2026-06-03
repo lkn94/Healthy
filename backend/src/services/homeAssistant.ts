@@ -45,6 +45,18 @@ export class HomeAssistantClient {
     return data;
   }
 
+  async fetchEntityState(entityId: string): Promise<HaStateEntity | null> {
+    try {
+      const { data } = await this.client.get<HaStateEntity>(`/api/states/${entityId}`);
+      return data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
   async fetchTimeZone() {
     const { data } = await this.client.get<HaConfigResponse>('/api/config');
     return data.time_zone ?? 'UTC';
