@@ -2,6 +2,7 @@ import type { PrismaClient } from '@prisma/client';
 import { decrypt } from '../utils/crypto';
 import { HomeAssistantClient, type HaStateEntity, type HistoryResponse } from './homeAssistant';
 import { buildDailySnapshots } from './snapshots';
+import { resolveStepWrite } from './snapshotWrites';
 import { recalculateLifetimeStats } from './stats';
 import { env } from '../env';
 import { getDayLabelsBetween, getZonedDayBounds, getZonedDayLabel } from './timezone';
@@ -98,11 +99,23 @@ export const runSyncJob = async (params: SyncRunnerParams) => {
         }
       });
 
+      const writeDecision = resolveStepWrite({
+        existing,
+        snapshot,
+        targetLabel,
+        todayLabel,
+        syncType: params.type
+      });
+
+      if (!writeDecision.shouldWrite) {
+        continue;
+      }
+
       const payload = {
         userId: params.userId,
         connectionId: params.connectionId,
         date: targetDate,
-        steps: snapshot.steps,
+        steps: writeDecision.steps,
         weight: snapshot.weight,
         distanceKm: snapshot.distanceKm,
         activeMinutes: snapshot.activeMinutes,
@@ -110,21 +123,8 @@ export const runSyncJob = async (params: SyncRunnerParams) => {
         source: params.type.toLowerCase()
       };
 
-      const hasAnyData =
-        snapshot.hasStepData ||
-        typeof snapshot.weight === 'number' ||
-        typeof snapshot.distanceKm === 'number' ||
-        typeof snapshot.activeMinutes === 'number' ||
-        typeof snapshot.calories === 'number';
-
       if (!existing) {
-        if (hasAnyData || targetLabel === todayLabel) {
-          await params.prisma.dailyHealthSnapshot.create({ data: payload });
-        }
-        continue;
-      }
-
-      if (!hasAnyData && targetLabel < todayLabel) {
+        await params.prisma.dailyHealthSnapshot.create({ data: payload });
         continue;
       }
 

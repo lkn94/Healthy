@@ -145,7 +145,7 @@ const computeDailySteps = (entries: HaStateEntity[] | undefined, dayLabels: stri
     const { start, end } = getZonedDayBounds(dayLabel, timeZone);
     const dayStart = start.getTime();
     const dayEnd = end.getTime();
-    let latestValue: number | null = null;
+    let maxValue: number | null = null;
 
     while (pointer < sorted.length) {
       const entry = sorted[pointer];
@@ -159,12 +159,13 @@ const computeDailySteps = (entries: HaStateEntity[] | undefined, dayLabels: stri
       }
       const value = parseNumber(entry.state);
       if (typeof value === 'number') {
-        latestValue = Math.round(value);
+        const rounded = Math.round(value);
+        maxValue = maxValue === null ? rounded : Math.max(maxValue, rounded);
       }
       pointer++;
     }
 
-    results.push({ value: latestValue ?? 0, hasData: latestValue !== null });
+    results.push({ value: maxValue ?? 0, hasData: maxValue !== null });
   }
 
   return results;
