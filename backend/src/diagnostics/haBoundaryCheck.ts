@@ -113,12 +113,42 @@ const main = async () => {
     mergedHistory.push(entries);
   }
 
+  const caloriesEntity = process.env.HA_CALORIES_ENTITY ?? null;
+
+  // Fetch calories too, so we can check the Math.max-by-label aggregation path.
+  if (caloriesEntity) {
+    const calMap = new Map<string, HaStateEntity[]>();
+    for (const dayLabel of dayLabels) {
+      const { start: s, end: e } = getZonedDayBounds(dayLabel, timeZone);
+      const chunk = await client.fetchHistory({ from: s, to: e, entityIds: [caloriesEntity] });
+      for (const series of chunk) {
+        if (!series.length) continue;
+        const id = series[0].entity_id;
+        if (!calMap.has(id)) calMap.set(id, []);
+        calMap.get(id)!.push(...series);
+      }
+    }
+    for (const entries of calMap.values()) {
+      entries.sort((a, b) => new Date(a.last_changed).getTime() - new Date(b.last_changed).getTime());
+      mergedHistory.push(entries);
+    }
+    console.log('\n--- calorie series (real HA) ---');
+    for (const entries of calMap.values()) {
+      for (const e of entries) {
+        const lbl = getZonedDayLabel(e.last_changed, timeZone);
+        const b = getZonedDayBounds(lbl, timeZone);
+        const isBoundary = new Date(e.last_changed).getTime() === b.start.getTime();
+        console.log(`  ${e.state} @ ${e.last_changed} -> day ${lbl}${isBoundary ? '  (== dayStart / carry-over)' : ''}`);
+      }
+    }
+  }
+
   const mapping = {
     stepsEntityId: stepsEntity,
     weightEntityId: null,
     distanceEntityId: null,
     activeMinutesEntityId: null,
-    caloriesEntityId: null
+    caloriesEntityId: caloriesEntity
   } as unknown as SensorMapping;
 
   let snapshots = buildDailySnapshots({
@@ -134,7 +164,7 @@ const main = async () => {
   for (const snap of snapshots) {
     const label = snap.date.toISOString().split('T')[0];
     const marker = label === todayLabel ? '  <-- TODAY' : '';
-    console.log(`  ${label}: steps=${snap.steps} hasStepData=${snap.hasStepData ?? false}${marker}`);
+    console.log(`  ${label}: steps=${snap.steps} calories=${snap.calories ?? '-'}${marker}`);
   }
   console.log('\n========================================================');
 };

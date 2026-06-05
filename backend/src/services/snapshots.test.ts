@@ -134,3 +134,78 @@ test('buildDailySnapshots marks missing step history without inventing data', ()
   assert.equal(snapshots[0]?.steps, 0);
   assert.equal(snapshots[0]?.hasStepData, false);
 });
+
+test('buildDailySnapshots ignores the carry-over boundary for calories (Math.max metrics)', () => {
+  // Same midnight carry-over issue as steps, but via the trackEntry/Math.max path.
+  // HA stamps the previous day's final value on the zoned day start; it must not
+  // pin today's calories to yesterday's total until they are out-earned.
+  const calorieMapping = { ...mapping, caloriesEntityId: 'sensor.calories' } as SensorMapping;
+  const snapshots = buildDailySnapshots({
+    history: [
+      [
+        {
+          entity_id: 'sensor.calories',
+          state: '1704', // carry-over from yesterday, stamped on the day start
+          last_changed: '2026-06-05T00:00:00+02:00',
+          last_updated: '2026-06-05T00:00:00+02:00',
+          attributes: {}
+        },
+        {
+          entity_id: 'sensor.calories',
+          state: '585', // after the daily reset
+          last_changed: '2026-06-05T07:00:00+02:00',
+          last_updated: '2026-06-05T07:00:00+02:00',
+          attributes: {}
+        },
+        {
+          entity_id: 'sensor.calories',
+          state: '671',
+          last_changed: '2026-06-05T18:00:00+02:00',
+          last_updated: '2026-06-05T18:00:00+02:00',
+          attributes: {}
+        }
+      ]
+    ],
+    mapping: calorieMapping,
+    dayLabels: ['2026-06-05'],
+    timeZone: 'Europe/Berlin',
+    defaultStepLengthMeters: 0.75
+  });
+
+  assert.equal(snapshots.length, 1);
+  // Must be today's real value (671), not yesterday's carry-over (1704).
+  assert.equal(snapshots[0]?.calories, 671);
+});
+
+test('buildDailySnapshots keeps the real in-day calorie max for a completed day', () => {
+  // The day-start boundary equals the prior day's total; the real in-day value is
+  // what should be stored. Guards against the skip accidentally dropping real data.
+  const calorieMapping = { ...mapping, caloriesEntityId: 'sensor.calories' } as SensorMapping;
+  const snapshots = buildDailySnapshots({
+    history: [
+      [
+        {
+          entity_id: 'sensor.calories',
+          state: '1739', // carry-over from the day before
+          last_changed: '2026-06-04T00:00:00+02:00',
+          last_updated: '2026-06-04T00:00:00+02:00',
+          attributes: {}
+        },
+        {
+          entity_id: 'sensor.calories',
+          state: '1704',
+          last_changed: '2026-06-04T21:12:00+02:00',
+          last_updated: '2026-06-04T21:12:00+02:00',
+          attributes: {}
+        }
+      ]
+    ],
+    mapping: calorieMapping,
+    dayLabels: ['2026-06-04'],
+    timeZone: 'Europe/Berlin',
+    defaultStepLengthMeters: 0.75
+  });
+
+  assert.equal(snapshots.length, 1);
+  assert.equal(snapshots[0]?.calories, 1704);
+});
