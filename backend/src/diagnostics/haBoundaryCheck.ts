@@ -9,8 +9,12 @@
  *
  * Nothing is written; only GET requests are made. No credentials are persisted.
  */
-import { HomeAssistantClient } from '../services/homeAssistant';
+import type { SensorMapping } from '@prisma/client';
+import { HomeAssistantClient, type HaStateEntity, type HistoryResponse } from '../services/homeAssistant';
 import { getZonedDayBounds, getZonedDayLabel, getDayLabelsBetween } from '../services/timezone';
+import { buildDailySnapshots } from '../services/snapshots';
+import { overlayTodayLiveSteps } from '../services/liveStepOverlay';
+import { env } from '../env';
 
 const required = (name: string) => {
   const value = process.env[name];
@@ -89,6 +93,48 @@ const main = async () => {
     console.log(`  last_updated : ${fmt(live.last_updated)}  -> zoned day ${getZonedDayLabel(live.last_updated, timeZone)}`);
     const diverge = getZonedDayLabel(live.last_changed, timeZone) !== getZonedDayLabel(live.last_updated, timeZone);
     console.log(`  changed/updated land on different zoned days: ${diverge ? 'YES (overlay fix matters here)' : 'no'}`);
+  }
+
+  // ---- Run the ACTUAL fixed pipeline against real data (mirrors syncRunner) ----
+  const historyMap = new Map<string, HaStateEntity[]>();
+  for (const dayLabel of dayLabels) {
+    const { start: s, end: e } = getZonedDayBounds(dayLabel, timeZone);
+    const chunk = await client.fetchHistory({ from: s, to: e, entityIds: [stepsEntity] });
+    for (const series of chunk) {
+      if (!series.length) continue;
+      const id = series[0].entity_id;
+      if (!historyMap.has(id)) historyMap.set(id, []);
+      historyMap.get(id)!.push(...series);
+    }
+  }
+  const mergedHistory: HistoryResponse = [];
+  for (const entries of historyMap.values()) {
+    entries.sort((a, b) => new Date(a.last_changed).getTime() - new Date(b.last_changed).getTime());
+    mergedHistory.push(entries);
+  }
+
+  const mapping = {
+    stepsEntityId: stepsEntity,
+    weightEntityId: null,
+    distanceEntityId: null,
+    activeMinutesEntityId: null,
+    caloriesEntityId: null
+  } as unknown as SensorMapping;
+
+  let snapshots = buildDailySnapshots({
+    history: mergedHistory,
+    mapping,
+    dayLabels,
+    timeZone,
+    defaultStepLengthMeters: env.DEFAULT_STEP_LENGTH_METERS
+  });
+  snapshots = overlayTodayLiveSteps({ snapshots, liveState: live, timeZone, todayLabel });
+
+  console.log('\n--- COMPUTED by fixed pipeline (what a sync would store) ---');
+  for (const snap of snapshots) {
+    const label = snap.date.toISOString().split('T')[0];
+    const marker = label === todayLabel ? '  <-- TODAY' : '';
+    console.log(`  ${label}: steps=${snap.steps} hasStepData=${snap.hasStepData ?? false}${marker}`);
   }
   console.log('\n========================================================');
 };
