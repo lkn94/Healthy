@@ -17,8 +17,14 @@ export const overlayTodayLiveSteps = (params: {
     return params.snapshots;
   }
 
+  // Decide whether the live reading belongs to today by when its *value* last
+  // changed (last_changed), not last_updated. Home Assistant bumps last_updated
+  // on attribute-only changes too, so a stale value carried over from yesterday
+  // can have last_updated == today while still reporting yesterday's count.
+  // Keying on last_updated would let that stale value overlay today (e.g. before
+  // the daily counter resets in the morning) and re-pin today to yesterday's total.
   const liveLabel = getZonedDayLabel(
-    params.liveState.last_updated || params.liveState.last_changed,
+    params.liveState.last_changed || params.liveState.last_updated,
     params.timeZone
   );
   if (liveLabel !== params.todayLabel) {

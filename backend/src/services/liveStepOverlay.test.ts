@@ -18,6 +18,18 @@ const buildLiveState = (state: string, lastUpdated: string): HaStateEntity => ({
   attributes: {}
 });
 
+const buildLiveStateWithTimes = (
+  state: string,
+  lastChanged: string,
+  lastUpdated: string
+): HaStateEntity => ({
+  entity_id: 'sensor.steps',
+  state,
+  last_changed: lastChanged,
+  last_updated: lastUpdated,
+  attributes: {}
+});
+
 test('overlayTodayLiveSteps raises today to the live state when it is newer and higher', () => {
   const snapshots = overlayTodayLiveSteps({
     snapshots: [buildSnapshot(2008, '2026-06-03')],
@@ -50,4 +62,22 @@ test('overlayTodayLiveSteps ignores stale live states from a different day', () 
   });
 
   assert.equal(snapshots[0]?.steps, 2008);
+});
+
+test('overlayTodayLiveSteps ignores a stale value even when last_updated bumped to today', () => {
+  // Yesterday's count (12000) is still reported in the early morning before the
+  // daily counter resets. Its value last changed yesterday, but an attribute-only
+  // refresh moved last_updated into today. The overlay must not pin today to it.
+  const snapshots = overlayTodayLiveSteps({
+    snapshots: [buildSnapshot(0, '2026-06-05')],
+    liveState: buildLiveStateWithTimes(
+      '12000',
+      '2026-06-04T21:30:00+02:00', // value last changed yesterday
+      '2026-06-05T03:00:00+02:00' // attribute-only refresh today
+    ),
+    timeZone: 'Europe/Berlin',
+    todayLabel: '2026-06-05'
+  });
+
+  assert.equal(snapshots[0]?.steps, 0);
 });

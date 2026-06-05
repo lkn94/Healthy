@@ -146,6 +146,7 @@ const computeDailySteps = (entries: HaStateEntity[] | undefined, dayLabels: stri
     const dayStart = start.getTime();
     const dayEnd = end.getTime();
     let maxValue: number | null = null;
+    let skippedCarryOver = false;
 
     while (pointer < sorted.length) {
       const entry = sorted[pointer];
@@ -157,6 +158,18 @@ const computeDailySteps = (entries: HaStateEntity[] | undefined, dayLabels: stri
       if (ts >= dayEnd) {
         break;
       }
+      // Home Assistant prepends the state as of the window start (the previous
+      // day's final value) as a synthetic sample stamped exactly on dayStart.
+      // A daily "steps today" counter only resets later in the day (often on the
+      // first push), so this carry-over still holds yesterday's total. Counting
+      // it pins "today" to yesterday's value until it is out-walked — i.e. the
+      // counter never appears to reset at 0:00. It belongs to yesterday, so skip it.
+      if (!skippedCarryOver && ts === dayStart) {
+        skippedCarryOver = true;
+        pointer++;
+        continue;
+      }
+      skippedCarryOver = true;
       const value = parseNumber(entry.state);
       if (typeof value === 'number') {
         const rounded = Math.round(value);
