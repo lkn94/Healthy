@@ -49,11 +49,16 @@ const getParts = (formatter: Intl.DateTimeFormat, date: Date) => {
     return acc;
   }, {});
 
+  // Some ICU builds (e.g. in Alpine/Node containers) format midnight as "24"
+  // under hourCycle 'h23' instead of "00". Feeding hour 24 into Date.UTC below
+  // overshoots by a full day and shifts every computed day boundary 24h earlier
+  // — which made "today" resolve to yesterday's window in production while local
+  // (full-ICU) machines were fine. Normalize it.
   return {
     year: values.year,
     month: values.month,
     day: values.day,
-    hour: values.hour,
+    hour: values.hour === '24' ? '00' : values.hour,
     minute: values.minute,
     second: values.second
   };

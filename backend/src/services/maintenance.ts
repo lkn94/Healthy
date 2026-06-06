@@ -4,8 +4,21 @@ import fs from 'fs';
 import path from 'path';
 import { recalculateLifetimeStats } from './stats';
 import { runSyncJob } from './syncRunner';
+import { env } from '../env';
 
-const HISTORY_MARKER_PATH = path.resolve(__dirname, '../../data/.history_rebuilt');
+// Keep the marker beside the SQLite DB so it lives on the mounted volume and
+// survives container recreation. env.DB_URL is already normalized to an absolute
+// file: path (e.g. file:/data/app.db); resolving from __dirname pointed at
+// /app/data instead, which does not exist in the runtime image and made the
+// marker write throw — aborting the rest of data maintenance every startup.
+const resolveDataDir = () => {
+  if (env.DB_URL.startsWith('file:')) {
+    return path.dirname(env.DB_URL.slice('file:'.length));
+  }
+  return path.resolve(__dirname, '../../data');
+};
+
+const HISTORY_MARKER_PATH = path.join(resolveDataDir(), '.history_rebuilt');
 
 const normalizeSnapshotDistances = async (app: FastifyInstance) => {
   const snapshots = await app.prisma.dailyHealthSnapshot.findMany({
@@ -36,7 +49,14 @@ export const runDataMaintenance = async (app: FastifyInstance) => {
     if (!fs.existsSync(HISTORY_MARKER_PATH)) {
       const success = await rebuildHistoricalSnapshots(app);
       if (success) {
-        fs.writeFileSync(HISTORY_MARKER_PATH, new Date().toISOString());
+        // Never let a marker-write failure abort the remaining maintenance
+        // steps (recent-snapshot rebuild + lifetime recalculation).
+        try {
+          fs.mkdirSync(path.dirname(HISTORY_MARKER_PATH), { recursive: true });
+          fs.writeFileSync(HISTORY_MARKER_PATH, new Date().toISOString());
+        } catch (markerError) {
+          app.log.warn({ err: markerError }, 'Failed to write history rebuild marker');
+        }
       }
     }
 

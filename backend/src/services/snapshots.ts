@@ -43,11 +43,24 @@ export const buildDailySnapshots = (params: DailySnapshotInput): DailySnapshotRe
     }
   >();
 
+  // HA prepends the state as of the day start (= the previous day's final value),
+  // stamped exactly on the zoned midnight. For daily-reset metrics (calories,
+  // distance, active minutes) this carry-over must not seed today's aggregate —
+  // otherwise Math.max pins them to yesterday's value until out-earned, exactly
+  // like the step counter did. The step path handles this in computeDailySteps;
+  // this guards the trackEntry-aggregated metrics the same way.
+  const isCarryOverBoundary = (entry: HaStateEntity) => {
+    const label = getZonedDayLabel(entry.last_changed, params.timeZone);
+    const { start } = getZonedDayBounds(label, params.timeZone);
+    return new Date(entry.last_changed).getTime() === start.getTime();
+  };
+
   const trackEntry = (entityId: string | null | undefined, handler: (entry: HaStateEntity) => void) => {
     if (!entityId) return;
     const entries = entityMap.get(entityId);
     if (!entries) return;
     for (const entry of entries) {
+      if (isCarryOverBoundary(entry)) continue;
       handler(entry);
     }
   };

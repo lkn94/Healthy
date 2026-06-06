@@ -19,7 +19,9 @@ const prisma = new PrismaClient({
 export default fp(async (fastify) => {
   await prisma.$connect();
   try {
-    await prisma.$executeRawUnsafe('PRAGMA journal_mode=WAL;');
+    // PRAGMA journal_mode=WAL returns a row, so it must be run as a query.
+    // $executeRawUnsafe expects no result set and throws on SQLite.
+    await prisma.$queryRawUnsafe('PRAGMA journal_mode=WAL;');
   } catch (error) {
     fastify.log.warn({ err: error }, 'Failed to enable WAL mode');
   }

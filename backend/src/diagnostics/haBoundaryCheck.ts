@@ -9,8 +9,12 @@
  *
  * Nothing is written; only GET requests are made. No credentials are persisted.
  */
-import { HomeAssistantClient } from '../services/homeAssistant';
+import type { SensorMapping } from '@prisma/client';
+import { HomeAssistantClient, type HaStateEntity, type HistoryResponse } from '../services/homeAssistant';
 import { getZonedDayBounds, getZonedDayLabel, getDayLabelsBetween } from '../services/timezone';
+import { buildDailySnapshots } from '../services/snapshots';
+import { overlayTodayLiveSteps } from '../services/liveStepOverlay';
+import { env } from '../env';
 
 const required = (name: string) => {
   const value = process.env[name];
@@ -89,6 +93,78 @@ const main = async () => {
     console.log(`  last_updated : ${fmt(live.last_updated)}  -> zoned day ${getZonedDayLabel(live.last_updated, timeZone)}`);
     const diverge = getZonedDayLabel(live.last_changed, timeZone) !== getZonedDayLabel(live.last_updated, timeZone);
     console.log(`  changed/updated land on different zoned days: ${diverge ? 'YES (overlay fix matters here)' : 'no'}`);
+  }
+
+  // ---- Run the ACTUAL fixed pipeline against real data (mirrors syncRunner) ----
+  const historyMap = new Map<string, HaStateEntity[]>();
+  for (const dayLabel of dayLabels) {
+    const { start: s, end: e } = getZonedDayBounds(dayLabel, timeZone);
+    const chunk = await client.fetchHistory({ from: s, to: e, entityIds: [stepsEntity] });
+    for (const series of chunk) {
+      if (!series.length) continue;
+      const id = series[0].entity_id;
+      if (!historyMap.has(id)) historyMap.set(id, []);
+      historyMap.get(id)!.push(...series);
+    }
+  }
+  const mergedHistory: HistoryResponse = [];
+  for (const entries of historyMap.values()) {
+    entries.sort((a, b) => new Date(a.last_changed).getTime() - new Date(b.last_changed).getTime());
+    mergedHistory.push(entries);
+  }
+
+  const caloriesEntity = process.env.HA_CALORIES_ENTITY ?? null;
+
+  // Fetch calories too, so we can check the Math.max-by-label aggregation path.
+  if (caloriesEntity) {
+    const calMap = new Map<string, HaStateEntity[]>();
+    for (const dayLabel of dayLabels) {
+      const { start: s, end: e } = getZonedDayBounds(dayLabel, timeZone);
+      const chunk = await client.fetchHistory({ from: s, to: e, entityIds: [caloriesEntity] });
+      for (const series of chunk) {
+        if (!series.length) continue;
+        const id = series[0].entity_id;
+        if (!calMap.has(id)) calMap.set(id, []);
+        calMap.get(id)!.push(...series);
+      }
+    }
+    for (const entries of calMap.values()) {
+      entries.sort((a, b) => new Date(a.last_changed).getTime() - new Date(b.last_changed).getTime());
+      mergedHistory.push(entries);
+    }
+    console.log('\n--- calorie series (real HA) ---');
+    for (const entries of calMap.values()) {
+      for (const e of entries) {
+        const lbl = getZonedDayLabel(e.last_changed, timeZone);
+        const b = getZonedDayBounds(lbl, timeZone);
+        const isBoundary = new Date(e.last_changed).getTime() === b.start.getTime();
+        console.log(`  ${e.state} @ ${e.last_changed} -> day ${lbl}${isBoundary ? '  (== dayStart / carry-over)' : ''}`);
+      }
+    }
+  }
+
+  const mapping = {
+    stepsEntityId: stepsEntity,
+    weightEntityId: null,
+    distanceEntityId: null,
+    activeMinutesEntityId: null,
+    caloriesEntityId: caloriesEntity
+  } as unknown as SensorMapping;
+
+  let snapshots = buildDailySnapshots({
+    history: mergedHistory,
+    mapping,
+    dayLabels,
+    timeZone,
+    defaultStepLengthMeters: env.DEFAULT_STEP_LENGTH_METERS
+  });
+  snapshots = overlayTodayLiveSteps({ snapshots, liveState: live, timeZone, todayLabel });
+
+  console.log('\n--- COMPUTED by fixed pipeline (what a sync would store) ---');
+  for (const snap of snapshots) {
+    const label = snap.date.toISOString().split('T')[0];
+    const marker = label === todayLabel ? '  <-- TODAY' : '';
+    console.log(`  ${label}: steps=${snap.steps} calories=${snap.calories ?? '-'}${marker}`);
   }
   console.log('\n========================================================');
 };
